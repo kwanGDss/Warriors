@@ -1,6 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "WarriorsCharacter.h"
+
+#include <string>
+
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -30,7 +33,7 @@ AWarriorsCharacter::AWarriorsCharacter()
 
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f); // ...at this rotation rate
 	GetCharacterMovement()->JumpZVelocity = 600.f;
 	GetCharacterMovement()->AirControl = 0.2f;
 
@@ -49,7 +52,20 @@ AWarriorsCharacter::AWarriorsCharacter()
 	CameraBoom->bEnableCameraLag = true;
 	CameraBoom->CameraLagSpeed = 5.0f;
 
+	// Initialize Lock-on system
 	bIsLockOnState = false;
+	EnemyCharacter = nullptr;
+
+	LockOnDirection = FVector::ZeroVector;
+	LockOnRotation = FRotator::ZeroRotator;
+	LockOnInterpolationRotation = FRotator::ZeroRotator;
+
+	//Initialize Roll
+	bIsRolling = false;
+
+	RollStartedTime = 0.0f;
+	RollDirection = FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::X);
+
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
@@ -72,9 +88,28 @@ void AWarriorsCharacter::Tick(float DeltaTime)
 
 		LockOnRotation.Pitch = 0.0f;
 
-		SetActorRotation(FMath::RInterpTo(GetActorRotation(), LockOnRotation, DeltaTime, 5.0f));
+		if (!bIsRolling)
+		{
+			SetActorRotation(FMath::RInterpTo(GetActorRotation(), LockOnRotation, DeltaTime, 5.0f));
+		}
 
 		GetController()->SetControlRotation(LockOnInterpolationRotation);
+	}
+
+	if (bIsRolling)
+	{
+		RollDirection = RollDirection.GetSafeNormal();
+		FRotator RollRotation = UKismetMathLibrary::MakeRotFromX(RollDirection);
+
+		SetActorRotation(FMath::RInterpTo(GetActorRotation(), RollRotation, DeltaTime, 10.0f));
+
+		SetActorLocation(FMath::VInterpTo(GetActorLocation(), RollDirection * 50.0f + GetActorLocation(), DeltaTime, 10.0f), true);
+
+		if (GetWorld()->TimeSince(RollStartedTime) >= 1.0f)
+		{
+			bIsRolling = false;
+			RollDirection = FVector::ZeroVector;
+		}
 	}
 }
 
@@ -94,6 +129,15 @@ void AWarriorsCharacter::LockOn()
 	else
 	{
 		GetCharacterMovement()->bOrientRotationToMovement = true;
+	}
+}
+
+void AWarriorsCharacter::Roll()
+{
+	if (!bIsRolling)
+	{
+		RollStartedTime = GetWorld()->GetTimeSeconds();
+		bIsRolling = true;
 	}
 }
 
@@ -124,6 +168,7 @@ void AWarriorsCharacter::SetupPlayerInputComponent(class UInputComponent* Player
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	PlayerInputComponent->BindAction("LockOn", IE_Pressed, this, &AWarriorsCharacter::LockOn);
+	PlayerInputComponent->BindAction("Roll", IE_Pressed, this, &AWarriorsCharacter::Roll);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AWarriorsCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AWarriorsCharacter::MoveRight);
@@ -179,8 +224,17 @@ void AWarriorsCharacter::LookUpAtRate(float Rate)
 
 void AWarriorsCharacter::MoveForward(float Value)
 {
-	if ((Controller != NULL) && (Value != 0.0f))
+	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling)
 	{
+		if (Value > 0)
+		{
+			RollDirection = FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::X);
+		}
+		else
+		{
+			RollDirection = -FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::X);
+		}
+
 		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
@@ -193,8 +247,17 @@ void AWarriorsCharacter::MoveForward(float Value)
 
 void AWarriorsCharacter::MoveRight(float Value)
 {
-	if ((Controller != NULL) && (Value != 0.0f))
+	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling)
 	{
+		if (Value > 0)
+		{
+			RollDirection = FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::Y);
+		}
+		else
+		{
+			RollDirection = -FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::Y);
+		}
+
 		// find out which way is right
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);

@@ -19,6 +19,8 @@ public:
 	void SwitchLockOnState();
 	void LockOn();
 
+	void Roll();
+	
 	virtual void AddControllerPitchInput(float Val) override;
 	virtual void AddControllerYawInput(float Val) override;
 
@@ -90,4 +92,10 @@ private:
 	FVector LockOnDirection;
 	FRotator LockOnRotation;
 	FRotator LockOnInterpolationRotation;
+
+	/** Rolling */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Roll, Meta = (AllowPrivateAccess = true))
+	bool bIsRolling;
+
+	float RollStartedTime;
 };
