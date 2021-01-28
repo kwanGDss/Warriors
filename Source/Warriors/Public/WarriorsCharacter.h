@@ -20,6 +20,9 @@ public:
 	void LockOn();
 
 	void Roll();
+
+	void Run();
+	void Walk();
 	
 	virtual void AddControllerPitchInput(float Val) override;
 	virtual void AddControllerYawInput(float Val) override;
@@ -61,6 +64,7 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	// End of APawn interface
 
+	UFUNCTION(BlueprintCallable)
 	virtual void SetEnemyCharacter(TSubclassOf<AWarriorsCharacter> EnemyCharacter);
 
 public:
@@ -94,8 +98,13 @@ private:
 	FRotator LockOnInterpolationRotation;
 
 	/** Rolling */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Roll, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Roll, Meta = (AllowPrivateAccess = true))
 	bool bIsRolling;
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Roll, Meta = (AllowPrivateAccess = true))
 	float RollStartedTime;
+
+	/** Running */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Run, Meta = (AllowPrivateAccess = true))
+	bool bIsRunning;
 };
