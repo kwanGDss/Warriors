@@ -5,9 +5,11 @@
 #include <string>
 
 #include "HeadMountedDisplayFunctionLibrary.h"
+#include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "Components/ProgressBar.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -66,6 +68,9 @@ AWarriorsCharacter::AWarriorsCharacter()
 	RollStartedTime = 0.0f;
 	RollDirection = FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::X);
 
+	//Initialize Running
+	bIsRunning = false;
+	GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
@@ -101,6 +106,11 @@ void AWarriorsCharacter::Tick(float DeltaTime)
 		RollDirection = RollDirection.GetSafeNormal();
 		FRotator RollRotation = UKismetMathLibrary::MakeRotFromX(RollDirection);
 
+		if (RollDirection == FVector::ZeroVector)
+		{
+			RollDirection = GetActorForwardVector();
+		}
+
 		SetActorRotation(FMath::RInterpTo(GetActorRotation(), RollRotation, DeltaTime, 10.0f));
 
 		SetActorLocation(FMath::VInterpTo(GetActorLocation(), RollDirection * 50.0f + GetActorLocation(), DeltaTime, 10.0f), true);
@@ -110,6 +120,15 @@ void AWarriorsCharacter::Tick(float DeltaTime)
 			bIsRolling = false;
 			RollDirection = FVector::ZeroVector;
 		}
+	}
+
+	if (bIsRunning)
+	{
+		CameraBoom->TargetArmLength = FMath::FInterpTo(CameraBoom->TargetArmLength, 400.0f, DeltaTime, 10.0f);
+	}
+	else
+	{
+		CameraBoom->TargetArmLength = FMath::FInterpTo(CameraBoom->TargetArmLength, 300.0f, DeltaTime, 10.0f);
 	}
 }
 
@@ -132,13 +151,30 @@ void AWarriorsCharacter::LockOn()
 	}
 }
 
-void AWarriorsCharacter::Roll()
+//void AWarriorsCharacter::Roll()
+//{
+//	if (!bIsRolling)
+//	{
+//		RollStartedTime = GetWorld()->GetTimeSeconds();
+//		bIsRolling = true;
+//	}
+//}
+
+void AWarriorsCharacter::Run()
 {
-	if (!bIsRolling)
+	if (GetCharacterMovement()->IsWalking())
 	{
-		RollStartedTime = GetWorld()->GetTimeSeconds();
-		bIsRolling = true;
+		GetCharacterMovement()->MaxWalkSpeed = 720.0f;
+
+		bIsRunning = true;
 	}
+}
+
+void AWarriorsCharacter::Walk()
+{
+	GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+
+	bIsRunning = false;
 }
 
 void AWarriorsCharacter::AddControllerPitchInput(float Val)
@@ -168,7 +204,9 @@ void AWarriorsCharacter::SetupPlayerInputComponent(class UInputComponent* Player
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	PlayerInputComponent->BindAction("LockOn", IE_Pressed, this, &AWarriorsCharacter::LockOn);
-	PlayerInputComponent->BindAction("Roll", IE_Pressed, this, &AWarriorsCharacter::Roll);
+	//PlayerInputComponent->BindAction("Roll", IE_Pressed, this, &AWarriorsCharacter::Roll);
+	PlayerInputComponent->BindAction("Run", IE_Pressed, this, &AWarriorsCharacter::Run);
+	PlayerInputComponent->BindAction("Run", IE_Released, this, &AWarriorsCharacter::Walk);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AWarriorsCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AWarriorsCharacter::MoveRight);
