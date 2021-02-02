@@ -107,4 +107,11 @@ private:
 	/** Running */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Run, Meta = (AllowPrivateAccess = true))
 	bool bIsRunning;
+
+	/** Move Axis */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Move, Meta = (AllowPrivateAccess = true))
+	float MoveForwardAxis;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Move, Meta = (AllowPrivateAccess = true))
+	float MoveRightAxis;
 };
