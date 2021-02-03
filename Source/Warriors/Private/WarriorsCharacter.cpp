@@ -262,6 +262,8 @@ void AWarriorsCharacter::LookUpAtRate(float Rate)
 
 void AWarriorsCharacter::MoveForward(float Value)
 {
+	MoveForwardAxis = Value;
+
 	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling)
 	{
 		if (Value > 0)
@@ -285,6 +287,8 @@ void AWarriorsCharacter::MoveForward(float Value)
 
 void AWarriorsCharacter::MoveRight(float Value)
 {
+	MoveRightAxis = Value;
+
 	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling)
 	{
 		if (Value > 0)
