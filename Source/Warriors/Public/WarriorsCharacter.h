@@ -19,12 +19,13 @@ public:
 	void SwitchLockOnState();
 	void LockOn();
 
-	void Roll();
+	//void Roll();
 
 	void Run();
 	void Walk();
-	
+
 	virtual void AddControllerPitchInput(float Val) override;
+	
 	virtual void AddControllerYawInput(float Val) override;
 
 	/** Returns CameraBoom subobject **/
