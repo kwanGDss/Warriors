@@ -179,19 +179,20 @@ void AWarriorsCharacter::Walk()
 
 void AWarriorsCharacter::AddControllerPitchInput(float Val)
 {
-	if (!bIsLockOnState)
-	{
+	if(!bIsRolling || !bIsLockOnState)
+	{	
 		Super::AddControllerPitchInput(Val);
 	}
 }
 
 void AWarriorsCharacter::AddControllerYawInput(float Val)
 {
-	if (!bIsLockOnState)
-	{
+	if(!bIsRolling || !bIsLockOnState)
+	{	
 		Super::AddControllerYawInput(Val);
 	}
 }
+
 
 //////////////////////////////////////////////////////////////////////////
 // Input
@@ -210,6 +211,9 @@ void AWarriorsCharacter::SetupPlayerInputComponent(class UInputComponent* Player
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AWarriorsCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AWarriorsCharacter::MoveRight);
+	
+	PlayerInputComponent->BindAxis("RollForward", this, &AWarriorsCharacter::RollForward);
+	PlayerInputComponent->BindAxis("RollRight", this, &AWarriorsCharacter::RollRight);
 
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
@@ -262,6 +266,20 @@ void AWarriorsCharacter::LookUpAtRate(float Rate)
 
 void AWarriorsCharacter::MoveForward(float Value)
 {
+	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling && BP_IsMoveSituation())
+	{
+		// find out which way is forward
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+		// get forward vector
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		AddMovementInput(Direction, Value);
+	}
+}
+
+void AWarriorsCharacter::RollForward(float Value)
+{
 	MoveForwardAxis = Value;
 
 	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling)
@@ -274,21 +292,28 @@ void AWarriorsCharacter::MoveForward(float Value)
 		{
 			RollDirection = -FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::X);
 		}
-
-		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get forward vector
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Direction, Value);
 	}
 }
 
 void AWarriorsCharacter::MoveRight(float Value)
 {
-	MoveRightAxis = Value;
+	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling && BP_IsMoveSituation())
+	{
+		// find out which way is right
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
+		// get right vector
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		// add movement in that direction
+		AddMovementInput(Direction, Value);
+	}
+}
+
+void AWarriorsCharacter::RollRight(float Value)
+{
+	MoveRightAxis = Value;
+	
 	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling)
 	{
 		if (Value > 0)
@@ -299,14 +324,5 @@ void AWarriorsCharacter::MoveRight(float Value)
 		{
 			RollDirection = -FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::Y);
 		}
-
-		// find out which way is right
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get right vector 
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		// add movement in that direction
-		AddMovementInput(Direction, Value);
 	}
 }
