@@ -25,8 +25,10 @@ public:
 	void Walk();
 
 	virtual void AddControllerPitchInput(float Val) override;
-	
 	virtual void AddControllerYawInput(float Val) override;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	bool BP_IsMoveSituation();
 
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -39,9 +41,11 @@ protected:
 
 	/** Called for forwards/backward input */
 	void MoveForward(float Value);
+	void RollForward(float Value);
 
 	/** Called for side to side input */
 	void MoveRight(float Value);
+	void RollRight(float Value);
 
 	/** 
 	 * Called via input to turn at a given rate. 
