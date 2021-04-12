@@ -15,6 +15,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Animation/AnimInstance.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AWarriorsCharacter
@@ -267,7 +268,7 @@ void AWarriorsCharacter::LookUpAtRate(float Rate)
 
 void AWarriorsCharacter::MoveForward(float Value)
 {
-	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling && BP_IsMoveSituation())
+	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling && BP_IsMoveSituation() && !GetMesh()->GetAnimInstance()->IsAnyMontagePlaying())
 	{
 		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -298,7 +299,7 @@ void AWarriorsCharacter::RollForward(float Value)
 
 void AWarriorsCharacter::MoveRight(float Value)
 {
-	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling && BP_IsMoveSituation())
+	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling && BP_IsMoveSituation() && !GetMesh()->GetAnimInstance()->IsAnyMontagePlaying())
 	{
 		// find out which way is right
 		const FRotator Rotation = Controller->GetControlRotation();
