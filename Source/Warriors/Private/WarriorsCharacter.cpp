@@ -80,7 +80,7 @@ AWarriorsCharacter::AWarriorsCharacter()
 void AWarriorsCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	UE_LOG(LogTemp, Warning, TEXT("Running... : %s"), bIsRolling ? TEXT("true") : TEXT("false"));
+	//UE_LOG(LogTemp, Warning, TEXT("Running... : %s"), bIsRolling ? TEXT("true") : TEXT("false"));
 	if (bIsLockOnState)
 	{
 		check(EnemyCharacter);
