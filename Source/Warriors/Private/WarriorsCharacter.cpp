@@ -15,6 +15,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Animation/AnimInstance.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AWarriorsCharacter
@@ -23,7 +24,7 @@ AWarriorsCharacter::AWarriorsCharacter()
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-
+	
 	// set our turn rates for input
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
@@ -79,7 +80,7 @@ AWarriorsCharacter::AWarriorsCharacter()
 void AWarriorsCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	//UE_LOG(LogTemp, Warning, TEXT("Running... : %s"), bIsRolling ? TEXT("true") : TEXT("false"));
 	if (bIsLockOnState)
 	{
 		check(EnemyCharacter);
@@ -101,7 +102,7 @@ void AWarriorsCharacter::Tick(float DeltaTime)
 		GetController()->SetControlRotation(LockOnInterpolationRotation);
 	}
 
-	if (bIsRolling)
+	if (bIsRolling && BP_IsMoveSituation())
 	{
 		RollDirection = RollDirection.GetSafeNormal();
 		FRotator RollRotation = UKismetMathLibrary::MakeRotFromX(RollDirection);
@@ -172,6 +173,7 @@ void AWarriorsCharacter::Run()
 
 void AWarriorsCharacter::Walk()
 {
+	//UE_LOG(LogTemp, Warning, TEXT("Walking.."));
 	GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 
 	bIsRunning = false;
@@ -266,7 +268,7 @@ void AWarriorsCharacter::LookUpAtRate(float Rate)
 
 void AWarriorsCharacter::MoveForward(float Value)
 {
-	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling && BP_IsMoveSituation())
+	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling && BP_IsMoveSituation() && !GetMesh()->GetAnimInstance()->IsAnyMontagePlaying())
 	{
 		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -282,7 +284,7 @@ void AWarriorsCharacter::RollForward(float Value)
 {
 	MoveForwardAxis = Value;
 
-	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling)
+	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling && BP_IsMoveSituation())
 	{
 		if (Value > 0)
 		{
@@ -297,7 +299,7 @@ void AWarriorsCharacter::RollForward(float Value)
 
 void AWarriorsCharacter::MoveRight(float Value)
 {
-	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling && BP_IsMoveSituation())
+	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling && BP_IsMoveSituation() && !GetMesh()->GetAnimInstance()->IsAnyMontagePlaying())
 	{
 		// find out which way is right
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -314,7 +316,7 @@ void AWarriorsCharacter::RollRight(float Value)
 {
 	MoveRightAxis = Value;
 	
-	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling)
+	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling && BP_IsMoveSituation())
 	{
 		if (Value > 0)
 		{
