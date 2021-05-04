@@ -113,6 +113,9 @@ private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Run, Meta = (AllowPrivateAccess = true))
 	bool bIsRunning;
 
+	UPROPERTY(VisibleInstanceOnly, Transient, Category = Run, Meta = (AllowPrivateAccess = true))
+	bool bPressedShiftKey;
+
 	/** Move Axis */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Move, Meta = (AllowPrivateAccess = true))
 	float MoveForwardAxis;

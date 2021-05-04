@@ -16,6 +16,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Animation/AnimInstance.h"
+#include "Math/Vector.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AWarriorsCharacter
@@ -80,7 +81,7 @@ AWarriorsCharacter::AWarriorsCharacter()
 void AWarriorsCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	//UE_LOG(LogTemp, Warning, TEXT("Running... : %s"), bIsRolling ? TEXT("true") : TEXT("false"));
+	UE_LOG(LogTemp, Warning, TEXT("Running... : %f"), GetVelocity().Size());
 	if (bIsLockOnState)
 	{
 		check(EnemyCharacter);
@@ -131,6 +132,13 @@ void AWarriorsCharacter::Tick(float DeltaTime)
 	{
 		CameraBoom->TargetArmLength = FMath::FInterpTo(CameraBoom->TargetArmLength, 300.0f, DeltaTime, 10.0f);
 	}
+
+	if (GetVelocity().Size() > 10.f && bPressedShiftKey)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = 720.0f;
+
+		bIsRunning = true;
+	}
 }
 
 void AWarriorsCharacter::SwitchLockOnState()
@@ -163,12 +171,9 @@ void AWarriorsCharacter::LockOn()
 
 void AWarriorsCharacter::Run()
 {
-	if (GetCharacterMovement()->IsWalking())
-	{
-		GetCharacterMovement()->MaxWalkSpeed = 720.0f;
+	//UE_LOG(LogTemp, Warning, TEXT("Running... : %f"), GetVelocity().Size());
 
-		bIsRunning = true;
-	}
+	bPressedShiftKey = true;
 }
 
 void AWarriorsCharacter::Walk()
@@ -176,6 +181,7 @@ void AWarriorsCharacter::Walk()
 	//UE_LOG(LogTemp, Warning, TEXT("Walking.."));
 	GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 
+	bPressedShiftKey = false;
 	bIsRunning = false;
 }
 
