@@ -113,9 +113,9 @@ void AWarriorsCharacter::Tick(float DeltaTime)
 			RollDirection = GetActorForwardVector();
 		}
 
-		SetActorRotation(FMath::RInterpTo(GetActorRotation(), RollRotation, DeltaTime, 10.0f));
+		//SetActorRotation(FMath::RInterpTo(GetActorRotation(), RollRotation, DeltaTime, 10.0f));
 
-		SetActorLocation(FMath::VInterpTo(GetActorLocation(), RollDirection * 50.0f + GetActorLocation(), DeltaTime, 10.0f), true);
+		//SetActorLocation(FMath::VInterpTo(GetActorLocation(), RollDirection * 50.0f + GetActorLocation(), DeltaTime, 10.0f), true);
 
 		if (GetWorld()->TimeSince(RollStartedTime) >= 1.0f)
 		{
