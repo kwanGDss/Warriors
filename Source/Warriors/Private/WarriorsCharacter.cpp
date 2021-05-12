@@ -25,7 +25,7 @@ AWarriorsCharacter::AWarriorsCharacter()
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-	
+
 	// set our turn rates for input
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
@@ -85,6 +85,9 @@ void AWarriorsCharacter::Tick(float DeltaTime)
 	if (bIsLockOnState)
 	{
 		check(EnemyCharacter);
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+		GetCharacterMovement()->MaxWalkSpeed = 450.0f;
+
 		LockOnDirection = EnemyCharacter->GetActorLocation() - GetActorLocation();
 		LockOnDirection = LockOnDirection.GetSafeNormal();
 
@@ -101,6 +104,11 @@ void AWarriorsCharacter::Tick(float DeltaTime)
 		}
 
 		GetController()->SetControlRotation(LockOnInterpolationRotation);
+	}
+	else
+	{
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 	}
 
 	if (bIsRolling && BP_IsMoveSituation())
@@ -172,31 +180,36 @@ void AWarriorsCharacter::LockOn()
 void AWarriorsCharacter::Run()
 {
 	//UE_LOG(LogTemp, Warning, TEXT("Running... : %f"), GetVelocity().Size());
-
-	bPressedShiftKey = true;
+	if (!bIsLockOnState)
+	{
+		bPressedShiftKey = true;
+	}
 }
 
 void AWarriorsCharacter::Walk()
 {
 	//UE_LOG(LogTemp, Warning, TEXT("Walking.."));
-	GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+	if (!bIsLockOnState)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 
-	bPressedShiftKey = false;
-	bIsRunning = false;
+		bPressedShiftKey = false;
+		bIsRunning = false;
+	}
 }
 
 void AWarriorsCharacter::AddControllerPitchInput(float Val)
 {
-	if(!bIsRolling || !bIsLockOnState)
-	{	
+	if (!bIsRolling || !bIsLockOnState)
+	{
 		Super::AddControllerPitchInput(Val);
 	}
 }
 
 void AWarriorsCharacter::AddControllerYawInput(float Val)
 {
-	if(!bIsRolling || !bIsLockOnState)
-	{	
+	if (!bIsRolling || !bIsLockOnState)
+	{
 		Super::AddControllerYawInput(Val);
 	}
 }
@@ -219,7 +232,7 @@ void AWarriorsCharacter::SetupPlayerInputComponent(class UInputComponent* Player
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AWarriorsCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AWarriorsCharacter::MoveRight);
-	
+
 	PlayerInputComponent->BindAxis("RollForward", this, &AWarriorsCharacter::RollForward);
 	PlayerInputComponent->BindAxis("RollRight", this, &AWarriorsCharacter::RollRight);
 
@@ -321,7 +334,7 @@ void AWarriorsCharacter::MoveRight(float Value)
 void AWarriorsCharacter::RollRight(float Value)
 {
 	MoveRightAxis = Value;
-	
+
 	if ((Controller != NULL) && (Value != 0.0f) && !bIsRolling && BP_IsMoveSituation())
 	{
 		if (Value > 0)
