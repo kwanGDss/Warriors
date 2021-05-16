@@ -5,11 +5,9 @@
 #include <string>
 
 #include "HeadMountedDisplayFunctionLibrary.h"
-#include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
-#include "Components/ProgressBar.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -46,6 +44,7 @@ AWarriorsCharacter::AWarriorsCharacter()
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+	CameraBoom->bDoCollisionTest = true;
 
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
@@ -81,12 +80,10 @@ AWarriorsCharacter::AWarriorsCharacter()
 void AWarriorsCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	UE_LOG(LogTemp, Warning, TEXT("Running... : %f"), GetVelocity().Size());
+	//UE_LOG(LogTemp, Warning, TEXT("Running... : %f"), GetVelocity().Size());
 	if (bIsLockOnState)
 	{
 		check(EnemyCharacter);
-		GetCharacterMovement()->bOrientRotationToMovement = false;
-		GetCharacterMovement()->MaxWalkSpeed = 450.0f;
 
 		LockOnDirection = EnemyCharacter->GetActorLocation() - GetActorLocation();
 		LockOnDirection = LockOnDirection.GetSafeNormal();
@@ -100,32 +97,27 @@ void AWarriorsCharacter::Tick(float DeltaTime)
 
 		if (!bIsRolling)
 		{
-			SetActorRotation(FMath::RInterpTo(GetActorRotation(), LockOnRotation, DeltaTime, 5.0f));
+			SetActorRotation(FMath::RInterpTo(GetActorRotation(), LockOnRotation, DeltaTime, 3.0f));
 		}
 
 		GetController()->SetControlRotation(LockOnInterpolationRotation);
 	}
-	else
-	{
-		GetCharacterMovement()->bOrientRotationToMovement = true;
-		GetCharacterMovement()->MaxWalkSpeed = 600.0f;
-	}
 
 	if (bIsRolling && BP_IsMoveSituation())
 	{
-		RollDirection = RollDirection.GetSafeNormal();
-		FRotator RollRotation = UKismetMathLibrary::MakeRotFromX(RollDirection);
+		//	RollDirection = RollDirection.GetSafeNormal();
+		//	FRotator RollRotation = UKismetMathLibrary::MakeRotFromX(RollDirection);
 
-		if (RollDirection == FVector::ZeroVector)
-		{
-			RollDirection = GetActorForwardVector();
-		}
+		//	if (RollDirection == FVector::ZeroVector)
+		//	{
+		//		RollDirection = GetActorForwardVector();
+		//	}
 
-		//SetActorRotation(FMath::RInterpTo(GetActorRotation(), RollRotation, DeltaTime, 10.0f));
+		//	//SetActorRotation(FMath::RInterpTo(GetActorRotation(), RollRotation, DeltaTime, 10.0f));
 
-		//SetActorLocation(FMath::VInterpTo(GetActorLocation(), RollDirection * 50.0f + GetActorLocation(), DeltaTime, 10.0f), true);
+		//	//SetActorLocation(FMath::VInterpTo(GetActorLocation(), RollDirection * 50.0f + GetActorLocation(), DeltaTime, 10.0f), true);
 
-		if (GetWorld()->TimeSince(RollStartedTime) >= 1.0f)
+		if (GetWorld()->TimeSince(RollStartedTime) >= 0.7f)
 		{
 			bIsRolling = false;
 			RollDirection = FVector::ZeroVector;
@@ -161,10 +153,12 @@ void AWarriorsCharacter::LockOn()
 	if (bIsLockOnState)
 	{
 		GetCharacterMovement()->bOrientRotationToMovement = false;
+		GetCharacterMovement()->MaxWalkSpeed = 150.0f;
 	}
 	else
 	{
 		GetCharacterMovement()->bOrientRotationToMovement = true;
+		GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 	}
 }
 
@@ -200,7 +194,7 @@ void AWarriorsCharacter::Walk()
 
 void AWarriorsCharacter::AddControllerPitchInput(float Val)
 {
-	if (!bIsRolling || !bIsLockOnState)
+	if (!bIsRolling && !bIsLockOnState)
 	{
 		Super::AddControllerPitchInput(Val);
 	}
@@ -208,7 +202,7 @@ void AWarriorsCharacter::AddControllerPitchInput(float Val)
 
 void AWarriorsCharacter::AddControllerYawInput(float Val)
 {
-	if (!bIsRolling || !bIsLockOnState)
+	if (!bIsRolling && !bIsLockOnState)
 	{
 		Super::AddControllerYawInput(Val);
 	}

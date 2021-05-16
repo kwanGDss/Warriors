@@ -17,6 +17,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	void SwitchLockOnState();
+
+	UFUNCTION(BlueprintCallable)
 	void LockOn();
 
 	//void Roll();
@@ -91,7 +93,7 @@ private:
 	class UCameraComponent* FollowCamera;
 
 	/** Lock-on system */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = LockOn, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = LockOn, Meta = (AllowPrivateAccess = true))
 	bool bIsLockOnState;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = LockOn, Meta = (AllowPrivateAccess = true))
