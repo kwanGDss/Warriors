@@ -83,7 +83,7 @@ void AWarriorsCharacter::Tick(float DeltaTime)
 	//UE_LOG(LogTemp, Warning, TEXT("Running... : %f"), GetVelocity().Size());
 	if (bIsLockOnState)
 	{
-		check(EnemyCharacter);
+		//check(EnemyCharacter);
 
 		LockOnDirection = EnemyCharacter->GetActorLocation() - GetActorLocation();
 		LockOnDirection = LockOnDirection.GetSafeNormal();
