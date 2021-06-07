@@ -153,7 +153,7 @@ void AWarriorsCharacter::LockOn()
 	if (bIsLockOnState)
 	{
 		GetCharacterMovement()->bOrientRotationToMovement = false;
-		GetCharacterMovement()->MaxWalkSpeed = 150.0f;
+		GetCharacterMovement()->MaxWalkSpeed = 300.0f;
 	}
 	else
 	{
