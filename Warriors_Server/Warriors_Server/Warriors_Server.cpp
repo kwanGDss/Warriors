@@ -15,6 +15,8 @@ using namespace std;
 #define	MAX_BUFFER		4096
 #define SERVER_PORT		8000
 #define MAX_CLIENTS		100
+constexpr char NUMOFTHREAD = 8;
+int				nThreadCnt;	
 
 // IOCP 소켓 구조체
 struct stSOCKETINFO
@@ -73,7 +75,6 @@ protected:
 	bool			bAccept;		// 요청 동작 플래그
 	bool			bWorkerThread;	// 작업 스레드 동작 플래그
 	HANDLE *		hWorkerHandle;	// 작업 스레드 핸들		
-	int				nThreadCnt;	
 };
 
 struct SESSION
@@ -138,7 +139,7 @@ private:
 	// 채팅 수신 후 클라이언트들에게 송신
 	static void BroadcastChat(stringstream & RecvStream, stSOCKETINFO * pSocket);
 	// 몬스터 피격 처리
-	//static void HitMonster(stringstream & RecvStream, stSOCKETINFO * pSocket);
+	static void HitMonster(stringstream & RecvStream, stSOCKETINFO * pSocket);
 
 	// 브로드캐스트 함수
 	static void Broadcast(stringstream & SendStream);	
@@ -186,7 +187,7 @@ bool IocpBase::Initialize()
 
 	if (nResult != 0)
 	{
-		printf_s("[ERROR] winsock 초기화 실패\n");
+		printf_s("Winsock Init Error\n");
 		return false;
 	}
 
@@ -195,7 +196,7 @@ bool IocpBase::Initialize()
 
 	if (ListenSocket == INVALID_SOCKET)
 	{
-		printf_s("[ERROR] 소켓 생성 실패\n");
+		printf_s("Socket Create Error\n");
 		return false;
 	}
 
@@ -212,7 +213,7 @@ bool IocpBase::Initialize()
 	
 	if (nResult == SOCKET_ERROR)
 	{
-		printf_s("[ERROR] bind 실패\n");
+		printf_s("Bind Error\n");
 		closesocket(ListenSocket);
 		WSACleanup();
 		return false;
@@ -222,7 +223,7 @@ bool IocpBase::Initialize()
 	nResult = listen(ListenSocket, SOMAXCONN);
 	if (nResult == SOCKET_ERROR)
 	{
-		printf_s("[ERROR] listen 실패\n");
+		printf_s("Listen Error\n");
 		closesocket(ListenSocket);
 		WSACleanup();
 		return false;
@@ -248,7 +249,7 @@ void IocpBase::StartServer()
 	// Worker Thread 생성
 	if (!CreateWorkerThread()) return;	
 
-	printf_s("[INFO] 서버 시작...\n");
+	printf_s("Server Start...\n");
 
 	// 클라이언트 접속을 받음
 	//while (bAccept)
@@ -266,40 +267,9 @@ void IocpBase::StartServer()
 			int err = WSAGetLastError();
 			if (WSA_IO_PENDING != err)
 			{
-				printf_s("[ERROR] Accept 실패\n");
+				printf_s("Accept \d Error\n", err);
 				return;
 			}
-		}
-
-
-
-		SocketInfo = new stSOCKETINFO();
-		SocketInfo->socket = clientSocket;
-		SocketInfo->recvBytes = 0;
-		SocketInfo->sendBytes = 0;
-		SocketInfo->dataBuf.len = MAX_BUFFER;
-		SocketInfo->dataBuf.buf = SocketInfo->messageBuffer;
-		flags = 0;
-
-		hIOCP = CreateIoCompletionPort(
-			(HANDLE)clientSocket, hIOCP, (DWORD)SocketInfo, 0
-		);
-
-		// 중첩 소켓을 지정하고 완료시 실행될 함수를 넘겨줌
-		nResult = WSARecv(
-			SocketInfo->socket,
-			&SocketInfo->dataBuf,
-			1,
-			&recvBytes,
-			&flags,
-			&(SocketInfo->overlapped),
-			NULL
-		);
-
-		if (nResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
-		{
-			printf_s("[ERROR] IO Pending 실패 : %d", WSAGetLastError());
-			return;
 		}
 	}
 
@@ -328,9 +298,8 @@ void IocpBase::Send(stSOCKETINFO * pSocket)
 
 	if (nResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
 	{
-		printf_s("[ERROR] WSASend 실패 : ", WSAGetLastError());
+		printf_s("WSASend Error : ", WSAGetLastError());
 	}
-
 
 }
 
@@ -363,22 +332,138 @@ void IocpBase::Recv(stSOCKETINFO * pSocket)
 
 	if (nResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
 	{
-		printf_s("[ERROR] WSARecv 실패 : ", WSAGetLastError());
+		printf_s("WSARecv Error : ", WSAGetLastError());
 	}
 }
 
 void IocpBase::WorkerThread()
 {
+	/*SocketInfo = new stSOCKETINFO();
+		SocketInfo->socket = clientSocket;
+		SocketInfo->recvBytes = 0;
+		SocketInfo->sendBytes = 0;
+		SocketInfo->dataBuf.len = MAX_BUFFER;
+		SocketInfo->dataBuf.buf = SocketInfo->messageBuffer;
+		flags = 0;*/
+
+	SOCKADDR_IN clientAddr;
+	int addrLen = sizeof(SOCKADDR_IN);
+	memset(&clientAddr, 0, addrLen);
+
+	/*	hIOCP = CreateIoCompletionPort(
+			(HANDLE)clientSocket, hIOCP, (DWORD)SocketInfo, 0
+		);
+
+		// 중첩 소켓을 지정하고 완료시 실행될 함수를 넘겨줌
+		nResult = WSARecv(
+			SocketInfo->socket,
+			&SocketInfo->dataBuf,
+			1,
+			&recvBytes,
+			&flags,
+			&(SocketInfo->overlapped),
+			NULL
+		);
+
+		if (nResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
+		{
+			printf_s("[ERROR] IO Pending 실패 : %d", WSAGetLastError());
+			return;
+		}
+		*/
+	while (true)
+	{
+		DWORD num_byte;
+		ULONG_PTR i_key;
+		WSAOVERLAPPED* over;
+		BOOL ret = GetQueuedCompletionStatus(h_iocp, &num_byte, &i_key, &over, INFINITE);
+		int key = static_cast<int>(i_key);
+
+		if (FALSE == ret)
+		{
+			int err = WSAGetLastError();
+			printf_s("GQCS %d error ", err);
+			//disconnect(key);
+			continue;
+		}
+		EX_OVER* ex_over = reinterpret_cast<EX_OVER*> (over);
+		/*switch (ex_over->m_op)
+		{
+			case OP_TYPE::OP_RECV:
+			{
+				unsigned char* ps = ex_over->m_netbuf;
+				int remain_data = num_byte + players[key].m_prev_recv;
+
+				while (remain_data > 0)
+				{
+					int packet_size = ps[0];
+					if (packet_size > remain_data) { break; }
+					process_packet(key, ps);
+					remain_data -= packet_size;
+					ps += packet_size;
+				}
+				if (remain_data > 0) { memcpy(ex_over->m_netbuf, ps, remain_data); }
+				players[key].m_prev_recv = remain_data;
+				do_recv(key);
+				break;
+			}
+			case OP_TYPE::OP_SEND:
+			{
+				if (num_byte != ex_over->m_wsabuf[0].len)
+				{
+					disconnect(key);
+					delete ex_over;
+				}
+				break;
+			}
+			case OP_TYPE::OP_ACCEPT:
+			{
+				SOCKET c_socket = ex_over->c_socket;
+				int p_id = get_new_player_id();
+				if (-1 == p_id)
+				{
+					closesocket(c_socket);
+					do_accept(listenSocket, ex_over);
+					continue;
+				}
+
+				SESSION& n_s = players[p_id];
+
+				n_s.m_lock.lock();
+				n_s.m_state = S_STATE::STATE_CONNECTED;
+				n_s.id = p_id;
+				n_s.m_prev_recv = 0;
+				n_s.m_recv_over.m_op = OP_TYPE::OP_RECV;
+				n_s.m_s = c_socket;
+				n_s.m_x = 3;
+				n_s.m_y = 3;
+				n_s.name[0] = 0;
+				n_s.m_lock.unlock();
+
+				CreateIoCompletionPort(reinterpret_cast<HANDLE>(c_socket), h_iocp, p_id, 0);
+
+				do_recv(p_id);
+				do_accept(listenSocket, ex_over);
 	
+				cout << "New Client [" << p_id << "] !" << endl;
+				break;
+			}
+
+			default:
+				cout << "Unknown Packet Type" << endl;
+				exit(-1);
+		}*/
+
+	}
 }
 
 // static 변수 초기화
 float				MainIocp::HitPoint = 0.1f;
 map<int, SOCKET>	MainIocp::SessionSocket;
-cCharactersInfo		MainIocp::CharactersInfo;
-DBConnector			MainIocp::Conn;
+//cCharactersInfo		MainIocp::CharactersInfo;
+//DBConnector			MainIocp::Conn;
 CRITICAL_SECTION	MainIocp::csPlayers;
-MonsterSet			MainIocp::MonstersInfo;
+//MonsterSet			MainIocp::MonstersInfo;
 
 unsigned int WINAPI CallWorkerThread(LPVOID p)
 {
@@ -399,23 +484,23 @@ MainIocp::MainIocp()
 	InitializeCriticalSection(&csPlayers);
 
 	// DB 접속
-	if (Conn.Connect(DB_ADDRESS, DB_ID, DB_PW, DB_SCHEMA, DB_PORT))
+	/*if (Conn.Connect(DB_ADDRESS, DB_ID, DB_PW, DB_SCHEMA, DB_PORT))
 	{
 		printf_s("[INFO] DB 접속 성공\n");
 	}
 	else {
 		printf_s("[ERROR] DB 접속 실패\n");
-	}
+	}*/
 
 	// 패킷 함수 포인터에 함수 지정
-	fnProcess[EPacketType::SIGNUP].funcProcessPacket = SignUp;
+	/*fnProcess[EPacketType::SIGNUP].funcProcessPacket = SignUp;
 	fnProcess[EPacketType::LOGIN].funcProcessPacket = Login;
 	fnProcess[EPacketType::ENROLL_PLAYER].funcProcessPacket = EnrollCharacter;
 	fnProcess[EPacketType::SEND_PLAYER].funcProcessPacket = SyncCharacters;
 	fnProcess[EPacketType::HIT_PLAYER].funcProcessPacket = HitCharacter;
 	fnProcess[EPacketType::CHAT].funcProcessPacket = BroadcastChat;
 	fnProcess[EPacketType::LOGOUT_PLAYER].funcProcessPacket = LogoutCharacter;
-	fnProcess[EPacketType::HIT_MONSTER].funcProcessPacket = HitMonster;
+	fnProcess[EPacketType::HIT_MONSTER].funcProcessPacket = HitMonster;*/
 }
 
 
@@ -437,12 +522,12 @@ MainIocp::~MainIocp()
 	}
 
 	// DB 연결 종료
-	Conn.Close();
+	//Conn.Close();
 }
 
 void MainIocp::StartServer()
 {
-	CreateMonsterManagementThread();
+	//CreateMonsterManagementThread();
 	IocpBase::StartServer();
 }
 
@@ -452,14 +537,14 @@ bool MainIocp::CreateWorkerThread()
 	// 시스템 정보 가져옴
 	SYSTEM_INFO sysInfo;
 	GetSystemInfo(&sysInfo);
-	printf_s("[INFO] CPU 갯수 : %d\n", sysInfo.dwNumberOfProcessors);
+	printf_s("CPU 갯수 : %d\n", sysInfo.dwNumberOfProcessors);
 	// 적절한 작업 스레드의 갯수는 (CPU * 2) + 1
 	nThreadCnt = sysInfo.dwNumberOfProcessors * 2;
 
 	// thread handler 선언
-	hWorkerHandle = new HANDLE[nThreadCnt];
+	//hWorkerHandle = new HANDLE[nThreadCnt];
 	// thread 생성
-	for (int i = 0; i < nThreadCnt; i++)
+	/*for (int i = 0; i < nThreadCnt; i++)
 	{
 		hWorkerHandle[i] = (HANDLE *)_beginthreadex(
 			NULL, 0, &CallWorkerThread, this, CREATE_SUSPENDED, &threadId
@@ -470,8 +555,8 @@ bool MainIocp::CreateWorkerThread()
 			return false;
 		}
 		ResumeThread(hWorkerHandle[i]);
-	}
-	printf_s("[INFO] Worker Thread 시작...\n");
+	}*/
+	printf_s("Worker Thread Start...\n");
 	return true;
 }
 
@@ -524,7 +609,7 @@ void MainIocp::MonsterManagementThread()
 	// 로직 시작
 	while (true)
 	{
-		for (auto & kvp : MonstersInfo.monsters)
+		/*for (auto & kvp : MonstersInfo.monsters)
 		{
 			auto & monster = kvp.second;
 			for (auto & player : CharactersInfo.players)
@@ -545,15 +630,15 @@ void MainIocp::MonsterManagementThread()
 					continue;
 				}
 			}
-		}
+		}*/
 
 		count++;
 		// 0.5초마다 클라이언트에게 몬스터 정보 전송
 		if (count > 15)
 		{			
 			stringstream SendStream;
-			SendStream << EPacketType::SYNC_MONSTER << endl;
-			SendStream << MonstersInfo << endl;
+			//SendStream << EPacketType::SYNC_MONSTER << endl;
+			//SendStream << MonstersInfo << endl;
 
 			count = 0;
 			Broadcast(SendStream);
@@ -563,10 +648,14 @@ void MainIocp::MonsterManagementThread()
 	}
 }
 
+void MainIocp::WriteCharactersInfoToSocket(stSOCKETINFO* pSocket)
+{
+}
+
 void MainIocp::InitializeMonsterSet()
 {
 	// 몬스터 초기화	
-	Monster mFields;
+	/*Monster mFields;
 
 	mFields.X = -5746;
 	mFields.Y = 3736;
@@ -592,7 +681,7 @@ void MainIocp::InitializeMonsterSet()
 	mFields.Y = 326;
 	mFields.Z = 8352;
 	mFields.Id = 4;
-	MonstersInfo.monsters[mFields.Id] = mFields;
+	MonstersInfo.monsters[mFields.Id] = mFields;*/
 }
 
 void MainIocp::WorkerThread()
@@ -652,11 +741,11 @@ void MainIocp::WorkerThread()
 			RecvStream >> PacketType;
 
 			// 패킷 처리
-			if (fnProcess[PacketType].funcProcessPacket != nullptr)
+			//if (fnProcess[PacketType].funcProcessPacket != nullptr)
 			{
-				fnProcess[PacketType].funcProcessPacket(RecvStream, pSocketInfo);
+				//fnProcess[PacketType].funcProcessPacket(RecvStream, pSocketInfo);
 			}
-			else
+			//else
 			{
 				printf_s("[ERROR] 정의 되지 않은 패킷 : %d\n", PacketType);
 			}
@@ -682,8 +771,8 @@ void MainIocp::SignUp(stringstream & RecvStream, stSOCKETINFO * pSocket)
 	printf_s("[INFO] 회원가입 시도 {%s}/{%s}\n", Id, Pw);
 
 	stringstream SendStream;
-	SendStream << EPacketType::SIGNUP << endl;
-	SendStream << Conn.SignUpAccount(Id, Pw) << endl;
+	//SendStream << EPacketType::SIGNUP << endl;
+	//SendStream << Conn.SignUpAccount(Id, Pw) << endl;
 
 	CopyMemory(pSocket->messageBuffer, (CHAR*)SendStream.str().c_str(), SendStream.str().length());
 	pSocket->dataBuf.buf = pSocket->messageBuffer;
@@ -703,8 +792,8 @@ void MainIocp::Login(stringstream & RecvStream, stSOCKETINFO * pSocket)
 	printf_s("[INFO] 로그인 시도 {%s}/{%s}\n", Id, Pw);
 
 	stringstream SendStream;
-	SendStream << EPacketType::LOGIN << endl;
-	SendStream << Conn.SearchAccount(Id, Pw) << endl;
+	//SendStream << EPacketType::LOGIN << endl;
+	//SendStream << Conn.SearchAccount(Id, Pw) << endl;
 
 	CopyMemory(pSocket->messageBuffer, (CHAR*)SendStream.str().c_str(), SendStream.str().length());
 	pSocket->dataBuf.buf = pSocket->messageBuffer;
@@ -715,7 +804,7 @@ void MainIocp::Login(stringstream & RecvStream, stSOCKETINFO * pSocket)
 
 void MainIocp::EnrollCharacter(stringstream & RecvStream, stSOCKETINFO * pSocket)
 {
-	cCharacter info;
+	/*cCharacter info;
 	RecvStream >> info;
 
 	printf_s("[INFO][%d]캐릭터 등록 - X : [%f], Y : [%f], Z : [%f], Yaw : [%f], Alive : [%d], Health : [%f]\n",
@@ -753,12 +842,12 @@ void MainIocp::EnrollCharacter(stringstream & RecvStream, stSOCKETINFO * pSocket
 	printf_s("[INFO] 클라이언트 수 : %d\n", SessionSocket.size());
 
 	//Send(pSocket);
-	BroadcastNewPlayer(info);
+	BroadcastNewPlayer(info);*/
 }
 
 void MainIocp::SyncCharacters(stringstream& RecvStream, stSOCKETINFO* pSocket)
 {
-	cCharacter info;
+	/*cCharacter info;
 	RecvStream >> info;
 
 	// 	 	printf_s("[INFO][%d]정보 수신 - %d\n",
@@ -788,12 +877,12 @@ void MainIocp::SyncCharacters(stringstream& RecvStream, stSOCKETINFO* pSocket)
 	LeaveCriticalSection(&csPlayers);
 
 	WriteCharactersInfoToSocket(pSocket);
-	Send(pSocket);
+	Send(pSocket);*/
 }
 
 void MainIocp::LogoutCharacter(stringstream& RecvStream, stSOCKETINFO* pSocket)
 {
-	int SessionId;
+	/*int SessionId;
 	RecvStream >> SessionId;
 	printf_s("[INFO] (%d)로그아웃 요청 수신\n", SessionId);
 	EnterCriticalSection(&csPlayers);
@@ -801,13 +890,13 @@ void MainIocp::LogoutCharacter(stringstream& RecvStream, stSOCKETINFO* pSocket)
 	LeaveCriticalSection(&csPlayers);
 	SessionSocket.erase(SessionId);
 	printf_s("[INFO] 클라이언트 수 : %d\n", SessionSocket.size());
-	WriteCharactersInfoToSocket(pSocket);
+	WriteCharactersInfoToSocket(pSocket);*/
 }
 
 void MainIocp::HitCharacter(stringstream & RecvStream, stSOCKETINFO * pSocket)
 {
 	// 피격 처리된 세션 아이디
-	int DamagedSessionId;
+	/*int DamagedSessionId;
 	RecvStream >> DamagedSessionId;
 	printf_s("[INFO] %d 데미지 받음 \n", DamagedSessionId);
 	EnterCriticalSection(&csPlayers);
@@ -819,12 +908,12 @@ void MainIocp::HitCharacter(stringstream & RecvStream, stSOCKETINFO * pSocket)
 	}
 	LeaveCriticalSection(&csPlayers);
 	WriteCharactersInfoToSocket(pSocket);
-	Send(pSocket);
+	Send(pSocket);*/
 }
 
 void MainIocp::BroadcastChat(stringstream& RecvStream, stSOCKETINFO* pSocket)
 {
-	stSOCKETINFO* client = new stSOCKETINFO;
+	/*stSOCKETINFO* client = new stSOCKETINFO;
 
 	int SessionId;
 	string Temp;
@@ -845,13 +934,13 @@ void MainIocp::BroadcastChat(stringstream& RecvStream, stSOCKETINFO* pSocket)
 	SendStream << EPacketType::CHAT << endl;
 	SendStream << Chat;
 
-	Broadcast(SendStream);
+	Broadcast(SendStream);*/
 }
 
-/*void MainIocp::HitMonster(stringstream & RecvStream, stSOCKETINFO * pSocket)
+void MainIocp::HitMonster(stringstream& RecvStream, stSOCKETINFO* pSocket)
 {
 	// 몬스터 피격 처리
-	int MonsterId;
+	/*int MonsterId;
 	RecvStream >> MonsterId;
 	MonstersInfo.monsters[MonsterId].Damaged(30.f);
 
@@ -867,23 +956,14 @@ void MainIocp::BroadcastChat(stringstream& RecvStream, stSOCKETINFO* pSocket)
 	}
 
 	// 다른 플레이어에게 브로드캐스트
-	/*stringstream SendStream;
+	stringstream SendStream;
 	SendStream << EPacketType::HIT_MONSTER << endl;
 	SendStream << MonstersInfo << endl;
 
 	Broadcast(SendStream);*/
-//}
-
-void MainIocp::BroadcastNewPlayer(cCharacter & player)
-{
-	stringstream SendStream;
-	SendStream << EPacketType::ENTER_NEW_PLAYER << endl;
-	SendStream << player << endl;
-
-	Broadcast(SendStream);
 }
 
-void MainIocp::Broadcast(stringstream & SendStream)
+void MainIocp::Broadcast(stringstream& SendStream)
 {
 	stSOCKETINFO* client = new stSOCKETINFO;
 	for (const auto& kvp : SessionSocket)
@@ -897,13 +977,24 @@ void MainIocp::Broadcast(stringstream & SendStream)
 	}
 }
 
+
+
+/*void MainIocp::BroadcastNewPlayer(cCharacter & player)
+{
+	stringstream SendStream;
+	SendStream << EPacketType::ENTER_NEW_PLAYER << endl;
+	SendStream << player << endl;
+
+	Broadcast(SendStream);
+}*/
+
 void MainIocp::WriteCharactersInfoToSocket(stSOCKETINFO * pSocket)
 {
 	stringstream SendStream;
 
 	// 직렬화	
-	SendStream << EPacketType::RECV_PLAYER << endl;
-	SendStream << CharactersInfo << endl;
+	//SendStream << EPacketType::RECV_PLAYER << endl;
+	//SendStream << CharactersInfo << endl;
 
 	// !!! 중요 !!! data.buf 에다 직접 데이터를 쓰면 쓰레기값이 전달될 수 있음
 	CopyMemory(pSocket->messageBuffer, (CHAR*)SendStream.str().c_str(), SendStream.str().length());
@@ -917,6 +1008,15 @@ int main()
 	if (iocp_server.Initialize())
 	{
 		iocp_server.StartServer();
+		vector<thread> worker_threads;
+		for(int i = 0; i < nThreadCnt; ++i)
+		{
+			worker_threads.emplace_back(WorkerThread);
+		}
+		for(auto& worker_thread : worker_threads) {worker_thread.join();}
+
+		closesocket(listenSocket);
+		WSACleanup();
 	}
     return 0;
 }
