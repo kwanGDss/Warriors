@@ -6,17 +6,16 @@
 #include <thread>
 #include <mutex>
 #include <unordered_set>
+#include "Protocol.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "MSWSock.lib")
 
 using namespace std;
 
-#define	MAX_BUFFER		4096
-#define SERVER_PORT		8000
-#define MAX_CLIENTS		100
-constexpr char NUMOFTHREAD = 8;
-int				nThreadCnt;	
+constexpr char	NUMOFTHREAD = 8;
+int				nThreadCnt = 0;
+HANDLE			hIOCP;
 
 // IOCP 소켓 구조체
 struct stSOCKETINFO
@@ -29,15 +28,16 @@ struct stSOCKETINFO
 	int				sendBytes;
 };
 
-struct EX_OVER
+struct SOCKETINFO
 {
-	WSAOVERLAPPED	m_over;
-	WSABUF			m_wsabuf[1];
-	unsigned char	m_netbuf[MAX_BUFFER];
+	WSAOVERLAPPED	overlapped;
+	WSABUF			wsabuf[1];
+	unsigned char	messagebuf[MAX_BUFFER];
 	//OP_TYPE			m_op;
-	SOCKET			c_socket;
+	SOCKET			client_socket;
 };
 
+SOCKETINFO*		a_over;
 
 // 패킷 처리 함수 포인터
 struct FuncProcess
@@ -80,7 +80,7 @@ protected:
 struct SESSION
 {
 	int						id					= 0;
-	EX_OVER					m_recv_over;
+	SOCKETINFO					m_recv_over;
 	unsigned char			m_prev_recv			= 0;
 	SOCKET					m_s					= 0;
 
@@ -94,9 +94,6 @@ struct SESSION
 
 //SESSION players[MAX_USER]; // Data Race!
 SOCKET listenSocket;
-HANDLE h_iocp;
-
-
 
 class MainIocp : public IocpBase
 {
@@ -254,13 +251,13 @@ void IocpBase::StartServer()
 	// 클라이언트 접속을 받음
 	//while (bAccept)
 	{
-		EX_OVER* a_over;
+		SOCKETINFO* a_over;
 		//a_over.m_op = OP_TYPE::OP_ACCEPT;
-		memset(&a_over->m_over, 0, sizeof(a_over->m_over));
+		memset(&a_over->overlapped, 0, sizeof(a_over->overlapped));
 		DWORD num_byte;
 		int addr_size = sizeof(SOCKADDR_IN) + 16;
-		a_over->c_socket = clientSocket;
-		BOOL ret = AcceptEx(ListenSocket, clientSocket, a_over->m_netbuf, 0, addr_size, addr_size, &num_byte, &a_over->m_over);
+		a_over->client_socket = clientSocket;
+		BOOL ret = AcceptEx(ListenSocket, clientSocket, a_over->wsabuf, 0, addr_size, addr_size, &num_byte, &a_over->m_over);
 
 		if (FALSE == ret)
 		{
@@ -376,7 +373,7 @@ void IocpBase::WorkerThread()
 		DWORD num_byte;
 		ULONG_PTR i_key;
 		WSAOVERLAPPED* over;
-		BOOL ret = GetQueuedCompletionStatus(h_iocp, &num_byte, &i_key, &over, INFINITE);
+		BOOL ret = GetQueuedCompletionStatus(hIOCP, &num_byte, &i_key, &over, INFINITE);
 		int key = static_cast<int>(i_key);
 
 		if (FALSE == ret)
@@ -386,12 +383,12 @@ void IocpBase::WorkerThread()
 			//disconnect(key);
 			continue;
 		}
-		EX_OVER* ex_over = reinterpret_cast<EX_OVER*> (over);
-		/*switch (ex_over->m_op)
+		SOCKETINFO* socketinfo = reinterpret_cast<SOCKETINFO*>(over);
+		/*switch (socketinfo->m_op)
 		{
 			case OP_TYPE::OP_RECV:
 			{
-				unsigned char* ps = ex_over->m_netbuf;
+				unsigned char* ps = SOCKETINFO->m_netbuf;
 				int remain_data = num_byte + players[key].m_prev_recv;
 
 				while (remain_data > 0)
@@ -402,28 +399,28 @@ void IocpBase::WorkerThread()
 					remain_data -= packet_size;
 					ps += packet_size;
 				}
-				if (remain_data > 0) { memcpy(ex_over->m_netbuf, ps, remain_data); }
+				if (remain_data > 0) { memcpy(SOCKETINFO->m_netbuf, ps, remain_data); }
 				players[key].m_prev_recv = remain_data;
 				do_recv(key);
 				break;
 			}
 			case OP_TYPE::OP_SEND:
 			{
-				if (num_byte != ex_over->m_wsabuf[0].len)
+				if (num_byte != SOCKETINFO->m_wsabuf[0].len)
 				{
 					disconnect(key);
-					delete ex_over;
+					delete SOCKETINFO;
 				}
 				break;
 			}
 			case OP_TYPE::OP_ACCEPT:
 			{
-				SOCKET c_socket = ex_over->c_socket;
+				SOCKET c_socket = SOCKETINFO->c_socket;
 				int p_id = get_new_player_id();
 				if (-1 == p_id)
 				{
 					closesocket(c_socket);
-					do_accept(listenSocket, ex_over);
+					do_accept(listenSocket, SOCKETINFO);
 					continue;
 				}
 
@@ -443,7 +440,7 @@ void IocpBase::WorkerThread()
 				CreateIoCompletionPort(reinterpret_cast<HANDLE>(c_socket), h_iocp, p_id, 0);
 
 				do_recv(p_id);
-				do_accept(listenSocket, ex_over);
+				do_accept(listenSocket, SOCKETINFO);
 	
 				cout << "New Client [" << p_id << "] !" << endl;
 				break;
@@ -1002,13 +999,319 @@ void MainIocp::WriteCharactersInfoToSocket(stSOCKETINFO * pSocket)
 	pSocket->dataBuf.len = SendStream.str().length();
 }
 
+bool Initialize()
+{
+	WSADATA wsaData;
+	int nResult;
+	// winsock 2.2 버전으로 초기화
+	nResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+
+	if (nResult != 0)
+	{
+		printf_s("Winsock Init Error\n");
+		return false;
+	}
+
+	// 소켓 생성
+	listenSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+
+	if (listenSocket == INVALID_SOCKET)
+	{
+		printf_s("Socket Create Error\n");
+		return false;
+	}
+
+	// 서버 정보 설정
+	SOCKADDR_IN serverAddr;
+	memset(&serverAddr, 0, sizeof(SOCKADDR_IN));
+	serverAddr.sin_family = AF_INET;
+	serverAddr.sin_port = htons(SERVER_PORT);
+	serverAddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+
+	// 소켓 설정
+	// boost bind 와 구별짓기 위해 ::bind 사용
+	nResult = ::bind(listenSocket, (struct sockaddr*)&serverAddr, sizeof(SOCKADDR_IN));
+	
+	if (nResult == SOCKET_ERROR)
+	{
+		printf_s("Bind Error\n");
+		closesocket(listenSocket);
+		WSACleanup();
+		return false;
+	}
+
+	// 수신 대기열 생성
+	nResult = listen(listenSocket, SOMAXCONN);
+	if (nResult == SOCKET_ERROR)
+	{
+		printf_s("Listen Error\n");
+		closesocket(listenSocket);
+		WSACleanup();
+		return false;
+	}
+
+	return true;
+}
+
+bool CalculateWorkerThread()
+{
+	unsigned int threadId;
+	// 시스템 정보 가져옴
+	SYSTEM_INFO sysInfo;
+	GetSystemInfo(&sysInfo);
+	printf_s("CPU 갯수 : {%d}\n", sysInfo.dwNumberOfProcessors);
+	// 적절한 작업 스레드의 갯수는 (CPU * 2) + 1
+	nThreadCnt = sysInfo.dwNumberOfProcessors * 2;
+	if(!nThreadCnt) {return false;}
+	printf_s("Worker Thread Start...\n");
+	return true;
+}
+
+void StartServer()
+{
+	int nResult;
+	// 클라이언트 정보
+	SOCKADDR_IN clientAddr;
+	int addrLen = sizeof(SOCKADDR_IN);
+	SOCKET clientSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+	DWORD recvBytes;
+	DWORD flags;
+
+	// Completion Port 객체 생성
+	hIOCP = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
+	CreateIoCompletionPort(reinterpret_cast<HANDLE>(listenSocket), hIOCP, (DWORD)100000, 0);
+
+	// Worker Thread 생성
+	if (!CalculateWorkerThread()) return;	
+
+	printf_s("Server Start...\n");
+
+	// 클라이언트 접속을 받음
+	//while (bAccept)
+	{
+		//a_over.m_op = OP_TYPE::OP_ACCEPT;
+		memset(&a_over->overlapped, 0, sizeof(a_over->overlapped));
+		DWORD num_byte;
+		int addr_size = sizeof(SOCKADDR_IN) + 16;
+		a_over->client_socket = clientSocket;
+		BOOL ret = AcceptEx(listenSocket, clientSocket, a_over->messagebuf, 0, addr_size, addr_size, &num_byte, &a_over->overlapped);
+
+		if (FALSE == ret)
+		{
+			int err = WSAGetLastError();
+			if (WSA_IO_PENDING != err)
+			{
+				printf_s("Accept {\d} Error\n", err);
+				return;
+			}
+		}
+	}
+}
+
+void WorkerThread()
+{
+	/*SocketInfo = new stSOCKETINFO();
+		SocketInfo->socket = clientSocket;
+		SocketInfo->recvBytes = 0;
+		SocketInfo->sendBytes = 0;
+		SocketInfo->dataBuf.len = MAX_BUFFER;
+		SocketInfo->dataBuf.buf = SocketInfo->messageBuffer;
+		flags = 0;*/
+
+	/*SOCKADDR_IN clientAddr;
+	int addrLen = sizeof(SOCKADDR_IN);
+	memset(&clientAddr, 0, addrLen);*/
+
+	/*	hIOCP = CreateIoCompletionPort(
+			(HANDLE)clientSocket, hIOCP, (DWORD)SocketInfo, 0
+		);
+
+		// 중첩 소켓을 지정하고 완료시 실행될 함수를 넘겨줌
+		nResult = WSARecv(
+			SocketInfo->socket,
+			&SocketInfo->dataBuf,
+			1,
+			&recvBytes,
+			&flags,
+			&(SocketInfo->overlapped),
+			NULL
+		);
+
+		if (nResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
+		{
+			printf_s("[ERROR] IO Pending 실패 : %d", WSAGetLastError());
+			return;
+		}
+		*/
+	while (true)
+	{
+		DWORD num_byte;
+		ULONG_PTR i_key;
+		WSAOVERLAPPED* over;
+		BOOL ret = GetQueuedCompletionStatus(hIOCP, &num_byte, &i_key, &over, INFINITE);
+		int key = static_cast<int>(i_key);
+
+		if (FALSE == ret)
+		{
+			int err = WSAGetLastError();
+			printf_s("GQCS {%d} error ", err);
+			//disconnect(key);
+			continue;
+		}
+		SOCKETINFO* SOCKETINFO = reinterpret_cast<SOCKETINFO*> (over);
+		/*switch (SOCKETINFO->m_op)
+		{
+			case OP_TYPE::OP_RECV:
+			{
+				unsigned char* ps = SOCKETINFO->m_netbuf;
+				int remain_data = num_byte + players[key].m_prev_recv;
+
+				while (remain_data > 0)
+				{
+					int packet_size = ps[0];
+					if (packet_size > remain_data) { break; }
+					process_packet(key, ps);
+					remain_data -= packet_size;
+					ps += packet_size;
+				}
+				if (remain_data > 0) { memcpy(SOCKETINFO->m_netbuf, ps, remain_data); }
+				players[key].m_prev_recv = remain_data;
+				do_recv(key);
+				break;
+			}
+			case OP_TYPE::OP_SEND:
+			{
+				if (num_byte != SOCKETINFO->m_wsabuf[0].len)
+				{
+					disconnect(key);
+					delete SOCKETINFO;
+				}
+				break;
+			}
+			case OP_TYPE::OP_ACCEPT:
+			{
+				SOCKET c_socket = SOCKETINFO->c_socket;
+				int p_id = get_new_player_id();
+				if (-1 == p_id)
+				{
+					closesocket(c_socket);
+					do_accept(listenSocket, SOCKETINFO);
+					continue;
+				}
+
+				SESSION& n_s = players[p_id];
+
+				n_s.m_lock.lock();
+				n_s.m_state = S_STATE::STATE_CONNECTED;
+				n_s.id = p_id;
+				n_s.m_prev_recv = 0;
+				n_s.m_recv_over.m_op = OP_TYPE::OP_RECV;
+				n_s.m_s = c_socket;
+				n_s.m_x = 3;
+				n_s.m_y = 3;
+				n_s.name[0] = 0;
+				n_s.m_lock.unlock();
+
+				CreateIoCompletionPort(reinterpret_cast<HANDLE>(c_socket), h_iocp, p_id, 0);
+
+				do_recv(p_id);
+				do_accept(listenSocket, SOCKETINFO);
+	
+				cout << "New Client [" << p_id << "] !" << endl;
+				break;
+			}
+
+			default:
+				cout << "Unknown Packet Type" << endl;
+				exit(-1);
+		}*/
+
+	}
+
+
+	// 함수 호출 성공 여부
+	BOOL	bResult;
+	int		nResult;
+	// Overlapped I/O 작업에서 전송된 데이터 크기
+	DWORD	recvBytes;
+	DWORD	sendBytes;
+	// Completion Key를 받을 포인터 변수
+	stSOCKETINFO *	pCompletionKey;
+	// I/O 작업을 위해 요청한 Overlapped 구조체를 받을 포인터	
+	stSOCKETINFO *	pSocketInfo;
+	DWORD	dwFlags = 0;
+
+
+	//while (bWorkerThread)
+	{
+		/**
+		 * 이 함수로 인해 쓰레드들은 WaitingThread Queue 에 대기상태로 들어가게 됨
+		 * 완료된 Overlapped I/O 작업이 발생하면 IOCP Queue 에서 완료된 작업을 가져와
+		 * 뒷처리를 함
+		 */
+		bResult = GetQueuedCompletionStatus(hIOCP,
+			&recvBytes,				// 실제로 전송된 바이트
+			(PULONG_PTR)&pCompletionKey,	// completion key
+			(LPOVERLAPPED *)&pSocketInfo,			// overlapped I/O 객체
+			INFINITE				// 대기할 시간
+		);
+
+		if (!bResult && recvBytes == 0)
+		{
+			printf_s("[INFO] socket(%d) 접속 끊김\n", pSocketInfo->socket);
+			closesocket(pSocketInfo->socket);
+			free(pSocketInfo);
+			//continue;
+		}
+
+		pSocketInfo->dataBuf.len = recvBytes;
+
+		if (recvBytes == 0)
+		{
+			closesocket(pSocketInfo->socket);
+			free(pSocketInfo);
+			//continue;
+		}
+
+		try
+		{
+			// 패킷 종류
+			int PacketType;
+			// 클라이언트 정보 역직렬화
+			stringstream RecvStream;
+
+			RecvStream << pSocketInfo->dataBuf.buf;
+			RecvStream >> PacketType;
+
+			// 패킷 처리
+			//if (fnProcess[PacketType].funcProcessPacket != nullptr)
+			{
+				//fnProcess[PacketType].funcProcessPacket(RecvStream, pSocketInfo);
+			}
+			//else
+			{
+				printf_s("[ERROR] 정의 되지 않은 패킷 : %d\n", PacketType);
+			}
+		}
+		catch (const std::exception& e)
+		{
+			printf_s("[ERROR] 알 수 없는 예외 발생 : %s\n", e.what());
+		}
+
+		// 클라이언트 대기
+		//Recv(pSocketInfo);
+	}
+}
+
+
 int main()
 {
-	MainIocp iocp_server;
-	if (iocp_server.Initialize())
+	//MainIocp iocp_server;
+	if (Initialize())
 	{
-		iocp_server.StartServer();
+		StartServer();
 		vector<thread> worker_threads;
+		while(!nThreadCnt){};
 		for(int i = 0; i < nThreadCnt; ++i)
 		{
 			worker_threads.emplace_back(WorkerThread);
