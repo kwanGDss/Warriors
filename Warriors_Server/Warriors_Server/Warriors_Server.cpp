@@ -991,39 +991,6 @@ void StartServer()
 
 void WorkerThread()
 {
-	/*SocketInfo = new stSOCKETINFO();
-		SocketInfo->socket = clientSocket;
-		SocketInfo->recvBytes = 0;
-		SocketInfo->sendBytes = 0;
-		SocketInfo->dataBuf.len = MAX_BUFFER;
-		SocketInfo->dataBuf.buf = SocketInfo->messageBuffer;
-		flags = 0;*/
-
-	/*SOCKADDR_IN clientAddr;
-	int addrLen = sizeof(SOCKADDR_IN);
-	memset(&clientAddr, 0, addrLen);*/
-
-	/*	hIOCP = CreateIoCompletionPort(
-			(HANDLE)clientSocket, hIOCP, (DWORD)SocketInfo, 0
-		);
-
-		// 중첩 소켓을 지정하고 완료시 실행될 함수를 넘겨줌
-		nResult = WSARecv(
-			SocketInfo->socket,
-			&SocketInfo->dataBuf,
-			1,
-			&recvBytes,
-			&flags,
-			&(SocketInfo->overlapped),
-			NULL
-		);
-
-		if (nResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
-		{
-			printf_s("[ERROR] IO Pending 실패 : %d", WSAGetLastError());
-			return;
-		}
-		*/
 	while (true)
 	{
 		DWORD num_byte;
@@ -1040,7 +1007,7 @@ void WorkerThread()
 			continue;
 		}
 		SOCKETINFO* socketinfo = reinterpret_cast<SOCKETINFO*> (over);
-		/*switch (socketinfo->m_op)
+		switch (socketinfo->m_op)
 		{
 			case OP_TYPE::OP_RECV:
 			{
@@ -1105,7 +1072,7 @@ void WorkerThread()
 			default:
 				cout << "Unknown Packet Type" << endl;
 				exit(-1);
-		}*/
+		}
 
 	}
 
@@ -1196,6 +1163,119 @@ void send_packet(int p_id, void* buf)
 	socketinfo->wsabuf[0].len = packet_size;
 
 	WSASend(players[p_id].socket, socketinfo->wsabuf, 1, 0, 0, &socketinfo->overlapped, 0);
+}
+
+void send_login_info(int p_id)
+{
+	s2c_packet_login_info packet;
+	packet.hp = 100;
+	packet.id = p_id;
+	packet.level = 3;
+	packet.size = sizeof(packet);
+	packet.type = S2C_PACKET_LOGIN_INFO;
+	packet.x = players[p_id].x;
+	packet.y = players[p_id].y;
+	send_packet(p_id, &packet);
+}
+
+void send_move_packet(int c_id, int p_id)
+{
+	s2c_packet_pc_move packet;
+	packet.id = p_id;
+	packet.size = sizeof(packet);
+	packet.type = S2C_PACKET_PC_MOVE;
+	packet.x = players[p_id].x;
+	packet.y = players[p_id].y;
+	send_packet(c_id, &packet);
+}
+
+void send_pc_login(int c_id, int p_id)
+{
+	s2c_packet_pc_login packet;
+	packet.id = p_id;
+	packet.size = sizeof(packet);
+	packet.type = S2C_PACKET_PC_LOGIN;
+	packet.x = players[p_id].x;
+	packet.y = players[p_id].y;
+	strcpy_s(packet.name, players[p_id].name);
+	packet.o_type = 0;
+	send_packet(c_id, &packet);
+}
+
+void send_pc_logout(int c_id, int p_id)
+{
+	s2c_packet_pc_logout packet;
+	packet.id = p_id;
+	packet.size = sizeof(packet);
+	packet.type = S2C_PACKET_PC_LOGOUT;
+	send_packet(c_id, &packet);
+}
+
+void do_recv(int p_id)
+{
+	SESSION& pl = players[p_id];
+	SOCKETINFO& rsocketinfo = pl.recv_over;
+	memset(&(rsocketinfo.overlapped), 0, sizeof(rsocketinfo.overlapped));
+	rsocketinfo.wsabuf[0].buf = reinterpret_cast<CHAR*>(rsocketinfo.messagebuf) + pl.prev_recv;
+	rsocketinfo.wsabuf[0].len = MAX_BUFFER - pl.prev_recv;
+	DWORD r_flag = 0;
+	WSARecv(pl.socket, rsocketinfo.wsabuf, 1, 0, &r_flag, &rsocketinfo.overlapped, 0);
+}
+
+void process_packet(int p_id, unsigned char* packet)
+{
+	c2s_packet_login* p = reinterpret_cast<c2s_packet_login*>(packet);
+	switch (p->type)
+	{
+		case C2S_PACKET_LOGIN:
+		{
+			players[p_id].lock.lock();
+			strcpy_s(players[p_id].name, p->name);
+			players[p_id].x = rand() % BOARD_WIDTH;
+			players[p_id].y = rand() % BOARD_HEIGHT;
+			send_login_info(p_id);
+			players[p_id].state = S_STATE::STATE_INGAME;
+			players[p_id].lock.unlock();
+
+			for (auto& pl : players)
+			{
+				if (pl.id == p_id) { continue; }
+				if (pl.state != S_STATE::STATE_INGAME) {continue; }
+				send_pc_login(p_id, pl.id);
+				send_pc_login(pl.id, p_id);
+			}
+			break;
+		}
+		case C2S_PACKET_MOVE:
+		{
+			c2s_packet_move* move_packet = reinterpret_cast<c2s_packet_move*>(packet);
+			break;
+		}
+		case S2S_PACKET_PC_ENTER_VP:
+		{
+			s2s_packet_pc_enter_vp* enter_packet = reinterpret_cast<s2s_packet_pc_enter_vp*>(packet);
+			players[p_id].lock.lock();
+			if(players[p_id].state != S_STATE::STATE_INGAME)
+			{
+				players[p_id].lock.unlock();
+				break;
+			}
+			players[p_id].lock.unlock();
+			break;
+		}
+		case S2S_PACKET_PC_MOVE_VP:
+		{
+			s2s_packet_pc_move_vp* move_packet = reinterpret_cast<s2s_packet_pc_move_vp*>(packet);
+			break;
+		}
+		case S2S_PACKET_PC_OUT_VP:
+		{
+			s2s_packet_pc_out_vp* out_packet = reinterpret_cast<s2s_packet_pc_out_vp*>(packet);
+			break;
+		}
+		default:
+			cout << "Unknown" << endl;
+	}
 }
 
 
