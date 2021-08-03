@@ -9,16 +9,15 @@
 #include "Protocol.h"
 #include "Common.h"
 
-
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "MSWSock.lib")
 
 using namespace std;
 
-constexpr char	NUMOFTHREAD = 8;
-int				nThreadCnt = 0;
+constexpr char	NUMOFTHREAD		= 8;
+int				nThreadCnt		= 0;
 HANDLE			hIOCP;
-int				nResult	= 0;	
+int				nResult			= 0;	
 
 // IOCP 소켓 구조체
 struct stSOCKETINFO
@@ -1183,6 +1182,20 @@ void WorkerThread()
 		// 클라이언트 대기
 		//Recv(pSocketInfo);
 	}
+}
+
+void send_packet(int p_id, void* buf)
+{
+	SOCKETINFO* socketinfo = new SOCKETINFO;
+
+	unsigned char packet_size = reinterpret_cast<unsigned char*>(buf)[0];
+	socketinfo->m_op = OP_TYPE::OP_SEND;
+	memset(&socketinfo->overlapped, 0, sizeof(socketinfo->overlapped));
+	memcpy(socketinfo->messagebuf, buf, packet_size);
+	socketinfo->wsabuf[0].buf = reinterpret_cast<char*>(socketinfo->messagebuf);
+	socketinfo->wsabuf[0].len = packet_size;
+
+	WSASend(players[p_id].socket, socketinfo->wsabuf, 1, 0, 0, &socketinfo->overlapped, 0);
 }
 
 

@@ -47,9 +47,9 @@ public:
 	float	Pitch;
 	float	Roll;
 	// 속도
-	float VX;
-	float VY;
-	float VZ;
+	float	VX;
+	float	VY;
+	float	 VZ;
 	// 속성
 	bool	IsAlive;		
 	float	HealthValue;
