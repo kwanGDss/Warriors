@@ -35,6 +35,7 @@ struct SOCKETINFO
 	WSAOVERLAPPED	overlapped;
 	WSABUF			wsabuf[1];
 	unsigned char	messagebuf[MAX_BUFFER];
+	EPacketType		packettype;
 	OP_TYPE			m_op;
 	SOCKET			client_socket;
 };
@@ -1003,16 +1004,17 @@ void WorkerThread()
 		{
 			int err = WSAGetLastError();
 			printf_s("GQCS {%d} error ", err);
-			//disconnect(key);
+			disconnect(key);
 			continue;
 		}
 		SOCKETINFO* socketinfo = reinterpret_cast<SOCKETINFO*> (over);
-		switch (socketinfo->m_op)
+		switch (socketinfo->packettype)
 		{
-			case OP_TYPE::OP_RECV:
+			//case OP_TYPE::OP_RECV:
+			case 
 			{
-				unsigned char* ps = socketinfo->m_netbuf;
-				int remain_data = num_byte + players[key].m_prev_recv;
+				unsigned char* ps = socketinfo->messagebuf;
+				int remain_data = num_byte + players[key].prev_recv;
 
 				while (remain_data > 0)
 				{
@@ -1022,45 +1024,45 @@ void WorkerThread()
 					remain_data -= packet_size;
 					ps += packet_size;
 				}
-				if (remain_data > 0) { memcpy(socketinfo->m_netbuf, ps, remain_data); }
-				players[key].m_prev_recv = remain_data;
+				if (remain_data > 0) { memcpy(socketinfo->messagebuf, ps, remain_data); }
+				players[key].prev_recv = remain_data;
 				do_recv(key);
 				break;
 			}
-			case OP_TYPE::OP_SEND:
+			//case OP_TYPE::OP_SEND:
 			{
-				if (num_byte != socketinfo->m_wsabuf[0].len)
+				if (num_byte != socketinfo->wsabuf[0].len)
 				{
 					disconnect(key);
-					delete SOCKETINFO;
+					delete socketinfo;
 				}
 				break;
 			}
-			case OP_TYPE::OP_ACCEPT:
+			//case OP_TYPE::OP_ACCEPT:
 			{
-				SOCKET c_socket = socketinfo->c_socket;
+				SOCKET socket = socketinfo->client_socket;
 				int p_id = get_new_player_id();
 				if (-1 == p_id)
 				{
-					closesocket(c_socket);
-					do_accept(listenSocket, SOCKETINFO);
+					closesocket(socket);
+					do_accept(listenSocket, socketinfo);
 					continue;
 				}
 
 				SESSION& n_s = players[p_id];
 
-				n_s.m_lock.lock();
-				n_s.m_state = S_STATE::STATE_CONNECTED;
+				n_s.lock.lock();
+				n_s.state = S_STATE::STATE_CONNECTED;
 				n_s.id = p_id;
-				n_s.m_prev_recv = 0;
-				n_s.m_recv_over.m_op = OP_TYPE::OP_RECV;
-				n_s.m_s = c_socket;
-				n_s.m_x = 3;
-				n_s.m_y = 3;
+				n_s.prev_recv = 0;
+				n_s.recv_over.m_op = OP_TYPE::OP_RECV;
+				n_s.socket = socket;
+				n_s.x = 3;
+				n_s.y = 3;
 				n_s.name[0] = 0;
-				n_s.m_lock.unlock();
+				n_s.lock.unlock();
 
-				CreateIoCompletionPort(reinterpret_cast<HANDLE>(c_socket), h_iocp, p_id, 0);
+				CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket), hIOCP, p_id, 0);
 
 				do_recv(p_id);
 				do_accept(listenSocket, socketinfo);
@@ -1165,6 +1167,43 @@ void send_packet(int p_id, void* buf)
 	WSASend(players[p_id].socket, socketinfo->wsabuf, 1, 0, 0, &socketinfo->overlapped, 0);
 }
 
+void do_accept(SOCKET s_socket, SOCKETINFO* a_over)
+{
+	SOCKET c_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+	memset(&a_over->overlapped, 0, sizeof(a_over->overlapped));
+	DWORD num_byte;
+	int addr_size = sizeof(SOCKADDR_IN) + 16;
+	a_over->client_socket = c_socket;
+	BOOL ret = AcceptEx(s_socket, c_socket, a_over->messagebuf, 0, addr_size, addr_size, &num_byte, &a_over->overlapped);
+	if (FALSE == ret)
+	{
+		int err = WSAGetLastError();
+		if (WSA_IO_PENDING != err)
+		{
+			printf_s("Accept : {%d}", err);
+			exit(-1);
+		}
+	}
+}
+
+int get_new_player_id()
+{
+	for (int i = 0; i < MAX_USER; ++i)
+	{
+		if (listenSocket == i) { continue; }
+		players[i].lock.lock();
+		if (S_STATE::STATE_FREE == players[i].state)
+		{
+			
+			players[i].state = S_STATE::STATE_CONNECTED;
+			players[i].lock.unlock();
+			return i;
+		}
+		players[i].lock.unlock();
+	}
+	return -1;
+}
+
 void send_login_info(int p_id)
 {
 	s2c_packet_login_info packet;
@@ -1209,6 +1248,26 @@ void send_pc_logout(int c_id, int p_id)
 	packet.size = sizeof(packet);
 	packet.type = S2C_PACKET_PC_LOGOUT;
 	send_packet(c_id, &packet);
+}
+
+void disconnect(int p_id)
+{
+	players[p_id].lock.lock();
+	players[p_id].state = S_STATE::STATE_CONNECTED;
+	closesocket(players[p_id].socket);
+	players[p_id].state = S_STATE::STATE_FREE;
+	players[p_id].lock.unlock();
+	for (auto& cl : players)
+	{
+		cl.lock.lock();
+		if (S_STATE::STATE_INGAME != cl.state) 
+		{
+			cl.lock.unlock();
+			continue; 
+		}
+		send_pc_logout(cl.id, p_id);
+		cl.lock.unlock();
+	}
 }
 
 void do_recv(int p_id)
