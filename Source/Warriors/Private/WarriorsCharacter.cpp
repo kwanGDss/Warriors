@@ -51,6 +51,11 @@ AWarriorsCharacter::AWarriorsCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+	// 체력, 에너지, 기분 기정
+	HealthValue = 1.0f;
+	EnergyValue = 0.5f;
+	MoodValue = 0.5f;
+
 	//Set camera lag
 	CameraBoom->bEnableCameraLag = true;
 	CameraBoom->CameraLagSpeed = 5.0f;
@@ -251,6 +256,16 @@ void AWarriorsCharacter::SetEnemyCharacter(TSubclassOf<AWarriorsCharacter> Enemy
 	EnemyCharacter = Cast<AWarriorsCharacter>(UGameplayStatics::GetActorOfClass(GetWorld(), EnemyCharacterClass));
 }
 
+
+void AWarriorsCharacter::UpdateHealth(float HealthChange)
+{
+	HealthValue += HealthChange;
+}
+
+float AWarriorsCharacter::GetHealth()
+{
+	return HealthValue;
+}
 
 void AWarriorsCharacter::OnResetVR()
 {

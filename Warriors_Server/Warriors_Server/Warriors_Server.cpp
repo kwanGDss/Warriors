@@ -652,7 +652,7 @@ void MainIocp::SignUp(stringstream & RecvStream, stSOCKETINFO * pSocket)
 	printf_s("[INFO] 회원가입 시도 {%s}/{%s}\n", Id, Pw);
 
 	stringstream SendStream;
-	SendStream << EPacketType::SIGNUP << endl;
+	SendStream << EPacketType::SIGNUP_PLAYER << endl;
 	//SendStream << Conn.SignUpAccount(Id, Pw) << endl;
 
 	CopyMemory(pSocket->messageBuffer, (CHAR*)SendStream.str().c_str(), SendStream.str().length());
@@ -1011,7 +1011,7 @@ void WorkerThread()
 		switch (socketinfo->packettype)
 		{
 			//case OP_TYPE::OP_RECV:
-			case 
+			case RECV_PLAYER:
 			{
 				unsigned char* ps = socketinfo->messagebuf;
 				int remain_data = num_byte + players[key].prev_recv;
@@ -1030,6 +1030,7 @@ void WorkerThread()
 				break;
 			}
 			//case OP_TYPE::OP_SEND:
+			case SEND_PLAYER:
 			{
 				if (num_byte != socketinfo->wsabuf[0].len)
 				{
@@ -1039,6 +1040,7 @@ void WorkerThread()
 				break;
 			}
 			//case OP_TYPE::OP_ACCEPT:
+			case ENTER_NEW_PLAYER:
 			{
 				SOCKET socket = socketinfo->client_socket;
 				int p_id = get_new_player_id();
@@ -1075,81 +1077,6 @@ void WorkerThread()
 				cout << "Unknown Packet Type" << endl;
 				exit(-1);
 		}
-
-	}
-
-
-	// 함수 호출 성공 여부
-	BOOL	bResult;
-	int		nResult;
-	// Overlapped I/O 작업에서 전송된 데이터 크기
-	DWORD	recvBytes;
-	DWORD	sendBytes;
-	// Completion Key를 받을 포인터 변수
-	stSOCKETINFO *	pCompletionKey;
-	// I/O 작업을 위해 요청한 Overlapped 구조체를 받을 포인터	
-	stSOCKETINFO *	pSocketInfo;
-	DWORD	dwFlags = 0;
-
-
-	//while (bWorkerThread)
-	{
-		/**
-		 * 이 함수로 인해 쓰레드들은 WaitingThread Queue 에 대기상태로 들어가게 됨
-		 * 완료된 Overlapped I/O 작업이 발생하면 IOCP Queue 에서 완료된 작업을 가져와
-		 * 뒷처리를 함
-		 */
-		bResult = GetQueuedCompletionStatus(hIOCP,
-			&recvBytes,				// 실제로 전송된 바이트
-			(PULONG_PTR)&pCompletionKey,	// completion key
-			(LPOVERLAPPED *)&pSocketInfo,			// overlapped I/O 객체
-			INFINITE				// 대기할 시간
-		);
-
-		if (!bResult && recvBytes == 0)
-		{
-			printf_s("[INFO] socket(%d) 접속 끊김\n", pSocketInfo->socket);
-			closesocket(pSocketInfo->socket);
-			free(pSocketInfo);
-			//continue;
-		}
-
-		pSocketInfo->dataBuf.len = recvBytes;
-
-		if (recvBytes == 0)
-		{
-			closesocket(pSocketInfo->socket);
-			free(pSocketInfo);
-			//continue;
-		}
-
-		try
-		{
-			// 패킷 종류
-			int PacketType;
-			// 클라이언트 정보 역직렬화
-			stringstream RecvStream;
-
-			RecvStream << pSocketInfo->dataBuf.buf;
-			RecvStream >> PacketType;
-
-			// 패킷 처리
-			//if (fnProcess[PacketType].funcProcessPacket != nullptr)
-			{
-				//fnProcess[PacketType].funcProcessPacket(RecvStream, pSocketInfo);
-			}
-			//else
-			{
-				printf_s("[ERROR] 정의 되지 않은 패킷 : %d\n", PacketType);
-			}
-		}
-		catch (const std::exception& e)
-		{
-			printf_s("[ERROR] 알 수 없는 예외 발생 : %s\n", e.what());
-		}
-
-		// 클라이언트 대기
-		//Recv(pSocketInfo);
 	}
 }
 
@@ -1158,6 +1085,7 @@ void send_packet(int p_id, void* buf)
 	SOCKETINFO* socketinfo = new SOCKETINFO;
 
 	unsigned char packet_size = reinterpret_cast<unsigned char*>(buf)[0];
+	socketinfo->packettype = SEND_PLAYER;
 	socketinfo->m_op = OP_TYPE::OP_SEND;
 	memset(&socketinfo->overlapped, 0, sizeof(socketinfo->overlapped));
 	memcpy(socketinfo->messagebuf, buf, packet_size);
@@ -1202,6 +1130,11 @@ int get_new_player_id()
 		players[i].lock.unlock();
 	}
 	return -1;
+}
+
+void SignUp(int p_id)
+{
+
 }
 
 void send_login_info(int p_id)
@@ -1310,28 +1243,6 @@ void process_packet(int p_id, unsigned char* packet)
 			c2s_packet_move* move_packet = reinterpret_cast<c2s_packet_move*>(packet);
 			break;
 		}
-		case S2S_PACKET_PC_ENTER_VP:
-		{
-			s2s_packet_pc_enter_vp* enter_packet = reinterpret_cast<s2s_packet_pc_enter_vp*>(packet);
-			players[p_id].lock.lock();
-			if(players[p_id].state != S_STATE::STATE_INGAME)
-			{
-				players[p_id].lock.unlock();
-				break;
-			}
-			players[p_id].lock.unlock();
-			break;
-		}
-		case S2S_PACKET_PC_MOVE_VP:
-		{
-			s2s_packet_pc_move_vp* move_packet = reinterpret_cast<s2s_packet_pc_move_vp*>(packet);
-			break;
-		}
-		case S2S_PACKET_PC_OUT_VP:
-		{
-			s2s_packet_pc_out_vp* out_packet = reinterpret_cast<s2s_packet_pc_out_vp*>(packet);
-			break;
-		}
 		default:
 			cout << "Unknown" << endl;
 	}
@@ -1340,7 +1251,6 @@ void process_packet(int p_id, unsigned char* packet)
 
 int main()
 {
-	//MainIocp iocp_server;
 	if (Initialize())
 	{
 		StartServer();

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "ClientSocket.h"
 #include "WarriorsCharacter.generated.h"
 
 UCLASS(config=Game)
@@ -36,6 +37,26 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	// 체력
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	float HealthValue;
+
+	// 에너지
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	float EnergyValue;
+
+	// 기분
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	float MoodValue;
+
+	// 체력 업데이트
+	UFUNCTION(BlueprintCallable, Category = "Properties")
+	void UpdateHealth(float HealthChange);
+
+	// 체력 가져오기
+	UFUNCTION(BlueprintPure, Category = "Properties")
+	float GetHealth();
 
 protected:
 	/** Resets HMD orientation in VR. */
