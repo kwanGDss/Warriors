@@ -6,7 +6,7 @@
 #include "Runtime/Core/Public/HAL/RunnableThread.h"
 #include <algorithm>
 #include <string>
-//#include "SungminPlayerController.h"
+//#include "PlayerController.h"
 
 cCharactersInfo* AClientSocket::RecvCharacterInfo(stringstream& RecvStream)
 {
@@ -313,7 +313,7 @@ void AClientSocket::HitPlayer(const int& SessionId)
 	);
 }
 
-/*void AClient_State::SetPlayerController(ASungminPlayerController* pPlayerController)
+/*void AClient_State::SetPlayerController(APlayerController* pPlayerController)
 {
 	// 플레이어 컨트롤러 세팅
 	if (pPlayerController)
