@@ -26,5 +26,5 @@ AKnightCharacter::AKnightCharacter()
 		GetMesh()->SetAnimInstanceClass(Anim_Mannequin.Class);
 	}
 
-	//Super::SetEnemyCharacter(AVikingCharacter::StaticClass());
+	Super::SetEnemyCharacter(AVikingCharacter::StaticClass());
 }
