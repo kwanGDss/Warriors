@@ -90,8 +90,6 @@ struct SESSION
 	mutex					lock;
 	char					name[MAX_NAME]		= {0,};
 	short					x = 0, y = 0;
-	//int						last_move_time		= 0;
-	//unordered_set <int>		m_viewlist;
 };
 
 SESSION players[MAX_USER]; // Data Race!
@@ -253,7 +251,6 @@ void IocpBase::StartServer()
 	while (bAccept)
 	{
 		SOCKETINFO* a_over;
-		a_over->m_op = OP_TYPE::OP_ACCEPT;
 		memset(&a_over->overlapped, 0, sizeof(a_over->overlapped));
 		DWORD num_byte;
 		int addr_size = sizeof(SOCKADDR_IN) + 16;
@@ -968,9 +965,7 @@ void StartServer()
 	printf_s("Server Start...\n");
 
 	// 클라이언트 접속을 받음
-	//while (bAccept)
 	{
-		//a_over.m_op = OP_TYPE::OP_ACCEPT;
 		memset(&a_over->overlapped, 0, sizeof(a_over->overlapped));
 		DWORD num_byte;
 		int addr_size = sizeof(SOCKADDR_IN) + 16;
@@ -1009,7 +1004,6 @@ void WorkerThread()
 		SOCKETINFO* socketinfo = reinterpret_cast<SOCKETINFO*> (over);
 		switch (socketinfo->packettype)
 		{
-			//case OP_TYPE::OP_RECV:
 			case RECV_PLAYER:
 			{
 				unsigned char* ps = socketinfo->messagebuf;
@@ -1028,7 +1022,6 @@ void WorkerThread()
 				do_recv(key);
 				break;
 			}
-			//case OP_TYPE::OP_SEND:
 			case SEND_PLAYER:
 			{
 				if (num_byte != socketinfo->wsabuf[0].len)
@@ -1038,9 +1031,9 @@ void WorkerThread()
 				}
 				break;
 			}
-			//case OP_TYPE::OP_ACCEPT:
-			case ENTER_NEW_PLAYER:
+			case EPacketType::LOGIN_PLAYER:
 			{
+				char* ps = reinterpret_cast<char*> (socketinfo->messagebuf);
 				SOCKET socket = socketinfo->client_socket;
 				int p_id = get_new_player_id();
 				if (-1 == p_id)
@@ -1050,17 +1043,17 @@ void WorkerThread()
 					continue;
 				}
 
+
 				SESSION& n_s = players[p_id];
 
 				n_s.lock.lock();
 				n_s.state = S_STATE::STATE_CONNECTED;
 				n_s.id = p_id;
 				n_s.prev_recv = 0;
-				n_s.recv_over.m_op = OP_TYPE::OP_RECV;
 				n_s.socket = socket;
 				n_s.x = 3;
 				n_s.y = 3;
-				n_s.name[0] = 0;
+				memcpy_s(n_s.name, sizeof(ps), ps, sizeof(ps));
 				n_s.lock.unlock();
 
 				CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket), hIOCP, p_id, 0);
@@ -1068,7 +1061,7 @@ void WorkerThread()
 				do_recv(p_id);
 				do_accept(listenSocket, socketinfo);
 	
-				cout << "New Client [" << p_id << "] !" << endl;
+				cout << "New player [" << ps << "] !" << endl;
 				break;
 			}
 
@@ -1085,7 +1078,6 @@ void send_packet(int p_id, void* buf)
 
 	unsigned char packet_size = reinterpret_cast<unsigned char*>(buf)[0];
 	socketinfo->packettype = SEND_PLAYER;
-	socketinfo->m_op = OP_TYPE::OP_SEND;
 	memset(&socketinfo->overlapped, 0, sizeof(socketinfo->overlapped));
 	memcpy(socketinfo->messagebuf, buf, packet_size);
 	socketinfo->wsabuf[0].buf = reinterpret_cast<char*>(socketinfo->messagebuf);

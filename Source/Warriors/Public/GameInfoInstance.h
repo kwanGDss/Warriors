@@ -67,6 +67,15 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
 	FString PlayerName;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	float Player_x;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	float Player_y;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	float Player_z;
+
 	UFUNCTION(BlueprintCallable, Category = "Properties")
 	void Send_Login_Packet();
 
