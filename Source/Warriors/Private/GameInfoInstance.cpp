@@ -32,12 +32,13 @@ UGameInfoInstance::~UGameInfoInstance()
 
 void UGameInfoInstance::Send_Login_Packet()
 {
-	//unsigned char packet_size = reinterpret_cast<unsigned char*>(buf)[0];
+	char* buf = TCHAR_TO_ANSI(*PlayerName);
+	unsigned char packet_size = reinterpret_cast<unsigned char*>(buf)[0];
 	s_over->packettype = EPacketType::LOGIN_PLAYER;
 	memset(&s_over->overlapped, 0, sizeof(s_over->overlapped));
-	//std::memcpy(s_over->messagebuf, buf, packet_size);
+	std::memcpy(s_over->messagebuf, buf, packet_size);
 	s_over->wsabuf[0].buf = reinterpret_cast<char*>(s_over->messagebuf);
-	//s_over->wsabuf[0].len = packet_size;
+	s_over->wsabuf[0].len = packet_size;
 
 	WSASend(serverSocket, s_over->wsabuf, 1, 0, 0, &s_over->overlapped, 0);
 }
