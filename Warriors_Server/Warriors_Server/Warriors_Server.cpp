@@ -36,7 +36,6 @@ struct SOCKETINFO
 	WSABUF			wsabuf[1];
 	unsigned char	messagebuf[MAX_BUFFER];
 	EPacketType		packettype;
-	OP_TYPE			m_op;
 	SOCKET			client_socket;
 };
 
@@ -518,7 +517,7 @@ void MainIocp::MonsterManagementThread()
 		if (count > 15)
 		{			
 			stringstream SendStream;
-			SendStream << EPacketType::SYNC_MONSTER << endl;
+			//SendStream << EPacketType::SYNC_MONSTER << endl;
 			//SendStream << MonstersInfo << endl;
 
 			count = 0;
@@ -673,7 +672,7 @@ void MainIocp::Login(stringstream & RecvStream, stSOCKETINFO * pSocket)
 	printf_s("[INFO] 로그인 시도 {%s}/{%s}\n", Id, Pw);
 
 	stringstream SendStream;
-	SendStream << EPacketType::LOGIN << endl;
+	//SendStream << EPacketType::PLAYER_LOGIN << endl;
 	//SendStream << Conn.SearchAccount(Id, Pw) << endl;
 
 	CopyMemory(pSocket->messageBuffer, (CHAR*)SendStream.str().c_str(), SendStream.str().length());
