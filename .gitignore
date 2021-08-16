@@ -75,3 +75,5 @@ DerivedDataCache/*
 
 # Create an empty directory
 !/**/.keep
+WindowsNoEditor/Manifest_NonUFSFiles_Win64.txt
+WindowsNoEditor/Warriors/Content/Paks/Warriors-WindowsNoEditor.pak
