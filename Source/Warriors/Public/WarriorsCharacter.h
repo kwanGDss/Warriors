@@ -70,6 +70,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
 	bool bHitGuardByEnemy;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	bool bIsDead;
 	
 	// 체력 업데이트
 	UFUNCTION(BlueprintCallable, Category = "Properties")
