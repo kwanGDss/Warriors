@@ -25,4 +25,12 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
 	FString IPAddress;
+
+	// 체력
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	float HealthValue;
+
+	// 에너지
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	float EnergyValue;
 };
