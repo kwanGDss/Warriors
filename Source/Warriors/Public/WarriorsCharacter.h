@@ -56,6 +56,15 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
 	bool bHitTheEnemy;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	bool bCanParry;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	bool bCanParriedByEnemy;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	bool bBeParriedByEnemy;
+	
 	// 체력 업데이트
 	UFUNCTION(BlueprintCallable, Category = "Properties")
 	void UpdateHealth(float HealthChange);
