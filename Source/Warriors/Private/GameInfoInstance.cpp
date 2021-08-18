@@ -9,6 +9,9 @@ UGameInfoInstance::UGameInfoInstance()
 {
     char* Server_IP = TCHAR_TO_ANSI(*IPAddress);
 
+	HealthValue = 1.f;
+	EnergyValue = 1.f;
+
 	WSADATA WSAData;
 	if(WSAStartup(MAKEWORD(2, 2), &WSAData) != 0) {printf_s("can't Start up\n");}
 
