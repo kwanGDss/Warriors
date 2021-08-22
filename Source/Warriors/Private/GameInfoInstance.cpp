@@ -58,6 +58,12 @@ void UGameInfoInstance::Send_Packet()
 	WSASend(serverSocket, s_over->wsabuf, 1, 0, 0, &s_over->overlapped, 0);
 }
 
+float UGameInfoInstance::Reduce_Energy(float UseEnergy)
+{
+	EnergyValue -= UseEnergy;
+	return EnergyValue;
+}
+
 void recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags)
 {
 	DWORD r_flag = 0;

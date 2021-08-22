@@ -82,6 +82,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Properties")
 	void Send_Packet();
 
+	UFUNCTION(BlueprintCallable, Category = "Properties")
+	float Reduce_Energy(float UseEnergy);
+
 	SOCKET serverSocket;
 
 	WSABUF s_wsabuf[1];
