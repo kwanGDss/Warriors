@@ -85,6 +85,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Properties")
 	float Reduce_Energy(float UseEnergy);
 
+	UFUNCTION(BlueprintCallable, Category = "Properties")
+	float Reduce_Health(float GetDamaged);
+
 	SOCKET serverSocket;
 
 	WSABUF s_wsabuf[1];

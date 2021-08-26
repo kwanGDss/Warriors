@@ -64,6 +64,12 @@ float UGameInfoInstance::Reduce_Energy(float UseEnergy)
 	return EnergyValue;
 }
 
+float UGameInfoInstance::Reduce_Health(float GetDamaged)
+{
+	HealthValue -= GetDamaged;
+	return HealthValue;
+}
+
 void recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags)
 {
 	DWORD r_flag = 0;
