@@ -39,8 +39,6 @@ struct SOCKETINFO
 	SOCKET			client_socket;
 };
 
-SOCKETINFO*		a_over;
-
 // 패킷 처리 함수 포인터
 struct FuncProcess
 {
@@ -232,11 +230,11 @@ void IocpBase::StartServer()
 {
 	//int nResult;
 	// 클라이언트 정보
-	SOCKADDR_IN clientAddr;
+	//SOCKADDR_IN clientAddr;
 	int addrLen = sizeof(SOCKADDR_IN);
 	SOCKET clientSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-	DWORD recvBytes;
-	DWORD flags;
+	//DWORD recvBytes;
+	//DWORD flags;
 
 	// Completion Port 객체 생성
 	hIOCP = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
@@ -246,27 +244,28 @@ void IocpBase::StartServer()
 	if (!CreateWorkerThread()) return;	
 
 	printf_s("Server Start...\n");
+	
+	/*SOCKETINFO a_over;
 
 	// 클라이언트 접속을 받음
 	while (bAccept)
 	{
-		SOCKETINFO* a_over;
-		memset(&a_over->overlapped, 0, sizeof(a_over->overlapped));
+		memset(&a_over.overlapped, 0, sizeof(a_over.overlapped));
 		DWORD num_byte;
 		int addr_size = sizeof(SOCKADDR_IN) + 16;
-		a_over->client_socket = clientSocket;
-		BOOL ret = AcceptEx(ListenSocket, clientSocket, a_over->wsabuf, 0, addr_size, addr_size, &num_byte, &a_over->overlapped);
+		a_over.client_socket = clientSocket;
+		BOOL ret = AcceptEx(ListenSocket, clientSocket, a_over.wsabuf, 0, addr_size, addr_size, &num_byte, &a_over->overlapped);
 
 		if (FALSE == ret)
 		{
 			int err = WSAGetLastError();
 			if (WSA_IO_PENDING != err)
 			{
-				printf_s("Accept \d Error\n", err);
+				printf_s("Accept %d Error\n", err);
 				return;
 			}
 		}
-	}
+	}*/
 }
 
 bool IocpBase::CreateWorkerThread()
@@ -285,7 +284,7 @@ void IocpBase::Send(stSOCKETINFO * pSocket)
 
 	if (nResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
 	{
-		printf_s("WSASend Error : ", WSAGetLastError());
+		printf_s("WSASend Error : %d", WSAGetLastError());
 	}
 
 }
@@ -312,7 +311,7 @@ void IocpBase::Recv(stSOCKETINFO * pSocket)
 
 	if (nResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
 	{
-		printf_s("WSARecv Error : ", WSAGetLastError());
+		printf_s("WSARecv Error : %d", WSAGetLastError());
 	}
 }
 
@@ -457,7 +456,7 @@ void MainIocp::Send(stSOCKETINFO * pSocket)
 
 	if (nResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING)
 	{
-		printf_s("[ERROR] WSASend 실패 : ", WSAGetLastError());
+		printf_s("[ERROR] WSASend 실패 : %d", WSAGetLastError());
 	}
 }
 
@@ -525,10 +524,6 @@ void MainIocp::MonsterManagementThread()
 	}
 }
 
-void MainIocp::WriteCharactersInfoToSocket(stSOCKETINFO* pSocket)
-{
-}
-
 void MainIocp::InitializeMonsterSet()
 {
 	// 몬스터 초기화	
@@ -565,10 +560,10 @@ void MainIocp::WorkerThread()
 {
 	// 함수 호출 성공 여부
 	BOOL	bResult;
-	int		nResult;
+	//int		nResult;
 	// Overlapped I/O 작업에서 전송된 데이터 크기
 	DWORD	recvBytes;
-	DWORD	sendBytes;
+	//DWORD	sendBytes;
 	// Completion Key를 받을 포인터 변수
 	stSOCKETINFO *	pCompletionKey;
 	// I/O 작업을 위해 요청한 Overlapped 구조체를 받을 포인터	
@@ -592,7 +587,7 @@ void MainIocp::WorkerThread()
 
 		if (!bResult && recvBytes == 0)
 		{
-			printf_s("[INFO] socket(%d) 접속 끊김\n", pSocketInfo->socket);
+			printf_s("[INFO] socket(%d) 접속 끊김\n", (int)(pSocketInfo->socket));
 			closesocket(pSocketInfo->socket);
 			free(pSocketInfo);
 			continue;
@@ -645,7 +640,7 @@ void MainIocp::SignUp(stringstream & RecvStream, stSOCKETINFO * pSocket)
 	RecvStream >> Id;
 	RecvStream >> Pw;
 
-	printf_s("[INFO] 회원가입 시도 {%s}/{%s}\n", Id, Pw);
+	//printf_s("[INFO] 회원가입 시도 {%s}/{%s}\n", Id, Pw);
 
 	stringstream SendStream;
 	SendStream << EPacketType::SIGNUP_PLAYER << endl;
@@ -653,7 +648,7 @@ void MainIocp::SignUp(stringstream & RecvStream, stSOCKETINFO * pSocket)
 
 	CopyMemory(pSocket->messageBuffer, (CHAR*)SendStream.str().c_str(), SendStream.str().length());
 	pSocket->dataBuf.buf = pSocket->messageBuffer;
-	pSocket->dataBuf.len = SendStream.str().length();
+	//pSocket->dataBuf.len = SendStream.str().length();
 
 	Send(pSocket);
 }
@@ -666,7 +661,7 @@ void MainIocp::Login(stringstream & RecvStream, stSOCKETINFO * pSocket)
 	RecvStream >> Id;
 	RecvStream >> Pw;
 
-	printf_s("[INFO] 로그인 시도 {%s}/{%s}\n", Id, Pw);
+	//printf_s("[INFO] 로그인 시도 {%s}/{%s}\n", Id, Pw);
 
 	stringstream SendStream;
 	//SendStream << EPacketType::PLAYER_LOGIN << endl;
@@ -674,7 +669,7 @@ void MainIocp::Login(stringstream & RecvStream, stSOCKETINFO * pSocket)
 
 	CopyMemory(pSocket->messageBuffer, (CHAR*)SendStream.str().c_str(), SendStream.str().length());
 	pSocket->dataBuf.buf = pSocket->messageBuffer;
-	pSocket->dataBuf.len = SendStream.str().length();
+	//pSocket->dataBuf.len = SendStream.str().length();
 
 	Send(pSocket);
 }
@@ -716,7 +711,7 @@ void MainIocp::EnrollCharacter(stringstream & RecvStream, stSOCKETINFO * pSocket
 
 	SessionSocket[info.SessionId] = pSocket->socket;
 
-	printf_s("[INFO] 클라이언트 수 : %d\n", SessionSocket.size());
+	//printf_s("[INFO] 클라이언트 수 : %d\n", SessionSocket.size());
 
 	Send(pSocket);
 	BroadcastNewPlayer(info);
@@ -766,7 +761,7 @@ void MainIocp::LogoutCharacter(stringstream& RecvStream, stSOCKETINFO* pSocket)
 	CharactersInfo.players[SessionId].IsAlive = false;
 	LeaveCriticalSection(&csPlayers);
 	SessionSocket.erase(SessionId);
-	printf_s("[INFO] 클라이언트 수 : %d\n", SessionSocket.size());
+	//printf_s("[INFO] 클라이언트 수 : %d\n", SessionSocket.size());
 	WriteCharactersInfoToSocket(pSocket);
 }
 
@@ -805,7 +800,7 @@ void MainIocp::BroadcastChat(stringstream& RecvStream, stSOCKETINFO* pSocket)
 	}
 	Chat += '\0';
 
-	printf_s("[CHAT] %s\n", Chat);
+	//printf_s("[CHAT] %s\n", Chat);
 
 	stringstream SendStream;
 	SendStream << EPacketType::CHAT << endl;
@@ -848,7 +843,7 @@ void MainIocp::Broadcast(stringstream& SendStream)
 		client->socket = kvp.second;
 		CopyMemory(client->messageBuffer, (CHAR*)SendStream.str().c_str(), SendStream.str().length());
 		client->dataBuf.buf = client->messageBuffer;
-		client->dataBuf.len = SendStream.str().length();
+		//client->dataBuf.len = SendStream.str().length();
 
 		Send(client);
 	}
@@ -874,8 +869,13 @@ void MainIocp::WriteCharactersInfoToSocket(stSOCKETINFO * pSocket)
 	// !!! 중요 !!! data.buf 에다 직접 데이터를 쓰면 쓰레기값이 전달될 수 있음
 	CopyMemory(pSocket->messageBuffer, (CHAR*)SendStream.str().c_str(), SendStream.str().length());
 	pSocket->dataBuf.buf = pSocket->messageBuffer;
-	pSocket->dataBuf.len = SendStream.str().length();
+	//pSocket->dataBuf.len = SendStream.str().length();
 }
+
+void disconnect(int p_id);
+void do_recv(int p_id);
+int get_new_player_id();
+void do_accept(SOCKET s_socket, SOCKETINFO* a_over);
 
 bool Initialize()
 {
@@ -933,7 +933,7 @@ bool Initialize()
 
 bool CalculateWorkerThread()
 {
-	unsigned int threadId;
+	//unsigned int threadId;
 	// 시스템 정보 가져옴
 	SYSTEM_INFO sysInfo;
 	GetSystemInfo(&sysInfo);
@@ -947,41 +947,27 @@ bool CalculateWorkerThread()
 
 void StartServer()
 {
-	int nResult;
+	//int nResult;
 	// 클라이언트 정보
-	SOCKADDR_IN clientAddr;
+	//SOCKADDR_IN clientAddr;
 	int addrLen = sizeof(SOCKADDR_IN);
 	SOCKET clientSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-	DWORD recvBytes;
-	DWORD flags;
+	//DWORD recvBytes;
+	//DWORD flags;
 
 	// Completion Port 객체 생성
 	hIOCP = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(listenSocket), hIOCP, (DWORD)100000, 0);
 
 	// Worker Thread 생성
-	if (!CalculateWorkerThread()) return;	
-
+	if (!CalculateWorkerThread()) return;
+	
 	printf_s("Server Start...\n");
 
-	// 클라이언트 접속을 받음
-	{
-		memset(&a_over->overlapped, 0, sizeof(a_over->overlapped));
-		DWORD num_byte;
-		int addr_size = sizeof(SOCKADDR_IN) + 16;
-		a_over->client_socket = clientSocket;
-		BOOL ret = AcceptEx(listenSocket, clientSocket, a_over->messagebuf, 0, addr_size, addr_size, &num_byte, &a_over->overlapped);
+	SOCKETINFO a_over;
+	a_over.packettype = EPacketType::LOGIN_PLAYER;
 
-		if (FALSE == ret)
-		{
-			int err = WSAGetLastError();
-			if (WSA_IO_PENDING != err)
-			{
-				printf_s("Accept {\d} Error\n", err);
-				return;
-			}
-		}
-	}
+	do_accept(listenSocket, &a_over);
 }
 
 void WorkerThread()
@@ -1077,7 +1063,7 @@ void send_packet(int p_id, void* buf)
 	SOCKETINFO* socketinfo = new SOCKETINFO;
 
 	unsigned char packet_size = reinterpret_cast<unsigned char*>(buf)[0];
-	socketinfo->packettype = SEND_PLAYER;
+	socketinfo->packettype = EPacketType::SEND_PLAYER;
 	memset(&socketinfo->overlapped, 0, sizeof(socketinfo->overlapped));
 	memcpy(socketinfo->messagebuf, buf, packet_size);
 	socketinfo->wsabuf[0].buf = reinterpret_cast<char*>(socketinfo->messagebuf);
@@ -1130,7 +1116,7 @@ void SignUp(int p_id)
 
 void send_login_info(int p_id)
 {
-	s2c_packet_login_info packet;
+	server_packet_login packet;
 	packet.hp = 100;
 	packet.id = p_id;
 	packet.level = 3;

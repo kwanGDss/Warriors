@@ -1,11 +1,5 @@
 #pragma once
 
-#ifdef COMMONCLASS_EXPORTS
-#define COMMONCLASS_API __declspec(dllexport)
-#else
-#define COMMONCLASS_API __declspec(dllimport)
-#endif
-
 #include <iostream>
 #include <map>
 
@@ -13,7 +7,7 @@ using namespace std;
 
 #define MAX_CLIENTS 100
 
-enum COMMONCLASS_API EPacketType
+enum EPacketType
 {
 	SIGNUP_PLAYER,
 	LOGIN_PLAYER,
@@ -25,13 +19,9 @@ enum COMMONCLASS_API EPacketType
 	DAMAGED_PLAYER,
 	CHAT,
 	ENTER_NEW_PLAYER
-	/*HIT_MONSTER,
-	SYNC_MONSTER,
-	SPAWN_MONSTER,
-	DESTROY_MONSTER*/
 };
 
-class COMMONCLASS_API cCharacter {
+class cCharacter {
 public:
 	cCharacter();
 	~cCharacter();
@@ -94,7 +84,7 @@ public:
 	}
 };
 
-class COMMONCLASS_API cCharactersInfo
+class cCharactersInfo
 {
 public:
 	cCharactersInfo();
@@ -133,7 +123,7 @@ public:
 	}
 };
 
-class COMMONCLASS_API CommonClass
+class CommonClass
 {
 public:
 	CommonClass();

@@ -41,34 +41,29 @@ SOCKET serverSocket;
 WSABUF s_wsabuf[1];
 WSABUF r_wsabuf[1];
 
-SOCKETINFO* s_over = new SOCKETINFO;
-
 void CALLBACK recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags);
 
-void Send_Login_Packet()
+void Send_Packet(void* buf)
 {
-	char* buf = const_cast<char*>("BBaKKi");
-	unsigned char packet_size = reinterpret_cast<unsigned char*>(buf)[0];
-	s_over->packettype = EPacketType::LOGIN_PLAYER;
-	memset(&s_over->overlapped, 0, sizeof(s_over->overlapped));
-	memcpy(s_over->messagebuf, buf, packet_size);
-	s_over->wsabuf[0].buf = reinterpret_cast<char*>(s_over->messagebuf);
-	s_over->wsabuf[0].len = packet_size;
+	SOCKETINFO* socketinfo = new SOCKETINFO;
 
-	WSASend(serverSocket, s_over->wsabuf, 1, 0, 0, &s_over->overlapped, 0);
+	unsigned char packet_size = reinterpret_cast<unsigned char*>(buf)[0];
+	socketinfo->packettype = EPacketType::RECV_PLAYER;
+	memset(&socketinfo->overlapped, 0, sizeof(socketinfo->overlapped));
+	memcpy(socketinfo->messagebuf, buf, packet_size);
+	socketinfo->wsabuf[0].buf = reinterpret_cast<char*>(socketinfo->messagebuf);
+	socketinfo->wsabuf[0].len = packet_size;
+
+	WSASend(serverSocket, socketinfo->wsabuf, 1, 0, 0, &socketinfo->overlapped, 0);
 }
 
-void Send_Packet()
+void Send_Login_Packet(void *buf)
 {
-	char* buf = const_cast<char*>("BBaKKi");
-	unsigned char packet_size = reinterpret_cast<unsigned char*>(buf)[0];
-	s_over->packettype = EPacketType::LOGIN_PLAYER;
-	memset(&s_over->overlapped, 0, sizeof(s_over->overlapped));
-	memcpy(s_over->messagebuf, buf, packet_size);
-	s_over->wsabuf[0].buf = reinterpret_cast<char*>(s_over->messagebuf);
-	s_over->wsabuf[0].len = packet_size;
-
-	WSASend(serverSocket, s_over->wsabuf, 1, 0, 0, &s_over->overlapped, 0);
+	client_packet_login packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_PACKET_LOGIN;
+	packet.name = "BBaKKi";
+	Send_Packet(&packet);
 }
 
 float Reduce_Energy(float UseEnergy)
@@ -109,7 +104,8 @@ int main(void)
 
 	WSAConnect(serverSocket, reinterpret_cast<sockaddr *>(&serverAddr), sizeof(serverAddr), NULL, NULL, 0, 0);
 
-	Send_Login_Packet();
+	char* buf = const_cast<char*>("BBaKKi");
+	Send_Login_Packet(buf);
 
 	closesocket(serverSocket);
 	WSACleanup();
