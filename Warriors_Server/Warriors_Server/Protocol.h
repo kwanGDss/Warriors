@@ -1,6 +1,6 @@
 #pragma once
 
-constexpr int MAX_NAME = 10;
+constexpr int MAX_NAME = 16;
 
 #pragma pack (push, 1)
 

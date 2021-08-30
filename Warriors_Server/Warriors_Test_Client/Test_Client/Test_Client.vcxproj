@@ -141,6 +141,10 @@
   <ItemGroup>
     <ClCompile Include="Warriors_Test_Client.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Warriors_Server\Common.h" />
+    <ClInclude Include="..\..\Warriors_Server\Protocol.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

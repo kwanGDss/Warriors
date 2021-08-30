@@ -643,7 +643,7 @@ void MainIocp::SignUp(stringstream & RecvStream, stSOCKETINFO * pSocket)
 	//printf_s("[INFO] 회원가입 시도 {%s}/{%s}\n", Id, Pw);
 
 	stringstream SendStream;
-	SendStream << EPacketType::SIGNUP_PLAYER << endl;
+	//SendStream << EPacketType::SIGNUP_PLAYER << endl;
 	//SendStream << Conn.SignUpAccount(Id, Pw) << endl;
 
 	CopyMemory(pSocket->messageBuffer, (CHAR*)SendStream.str().c_str(), SendStream.str().length());
@@ -803,7 +803,7 @@ void MainIocp::BroadcastChat(stringstream& RecvStream, stSOCKETINFO* pSocket)
 	//printf_s("[CHAT] %s\n", Chat);
 
 	stringstream SendStream;
-	SendStream << EPacketType::CHAT << endl;
+	//SendStream << EPacketType::CHAT << endl;
 	SendStream << Chat;
 
 	Broadcast(SendStream);
@@ -852,7 +852,7 @@ void MainIocp::Broadcast(stringstream& SendStream)
 void MainIocp::BroadcastNewPlayer(cCharacter & player)
 {
 	stringstream SendStream;
-	SendStream << EPacketType::ENTER_NEW_PLAYER << endl;
+	//SendStream << EPacketType::ENTER_NEW_PLAYER << endl;
 	SendStream << player << endl;
 
 	Broadcast(SendStream);
@@ -863,7 +863,7 @@ void MainIocp::WriteCharactersInfoToSocket(stSOCKETINFO * pSocket)
 	stringstream SendStream;
 
 	// 직렬화	
-	SendStream << EPacketType::RECV_PLAYER << endl;
+	//SendStream << EPacketType::RECV_PLAYER << endl;
 	SendStream << CharactersInfo << endl;
 
 	// !!! 중요 !!! data.buf 에다 직접 데이터를 쓰면 쓰레기값이 전달될 수 있음
@@ -970,6 +970,8 @@ void StartServer()
 	do_accept(listenSocket, &a_over);
 }
 
+void process_packet(int p_id, unsigned char* packet);
+
 void WorkerThread()
 {
 	while (true)
@@ -990,7 +992,7 @@ void WorkerThread()
 		SOCKETINFO* socketinfo = reinterpret_cast<SOCKETINFO*> (over);
 		switch (socketinfo->packettype)
 		{
-			case RECV_PLAYER:
+		case EPacketType::RECV_PLAYER:
 			{
 				unsigned char* ps = socketinfo->messagebuf;
 				int remain_data = num_byte + players[key].prev_recv;
@@ -1008,7 +1010,7 @@ void WorkerThread()
 				do_recv(key);
 				break;
 			}
-			case SEND_PLAYER:
+		case EPacketType::SEND_PLAYER:
 			{
 				if (num_byte != socketinfo->wsabuf[0].len)
 				{
@@ -1037,12 +1039,14 @@ void WorkerThread()
 				n_s.id = p_id;
 				n_s.prev_recv = 0;
 				n_s.socket = socket;
-				n_s.x = 3;
-				n_s.y = 3;
+				n_s.x = rand() % 10;
+				n_s.y = rand() % 10;
 				memcpy_s(n_s.name, sizeof(ps), ps, sizeof(ps));
 				n_s.lock.unlock();
 
 				CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket), hIOCP, p_id, 0);
+				
+				printf_s("%s", n_s.name);
 
 				do_recv(p_id);
 				do_accept(listenSocket, socketinfo);
@@ -1143,7 +1147,7 @@ void send_pc_login(int c_id, int p_id)
 	s2c_packet_pc_login packet;
 	packet.id = p_id;
 	packet.size = sizeof(packet);
-	packet.type = S2C_PACKET_PC_LOGIN;
+	packet.type = SERVER_PACKET_PC_LOGIN;
 	packet.x = players[p_id].x;
 	packet.y = players[p_id].y;
 	strcpy_s(packet.name, players[p_id].name);
@@ -1193,10 +1197,10 @@ void do_recv(int p_id)
 
 void process_packet(int p_id, unsigned char* packet)
 {
-	c2s_packet_login* p = reinterpret_cast<c2s_packet_login*>(packet);
+	client_packet_login* p = reinterpret_cast<client_packet_login*>(packet);
 	switch (p->type)
 	{
-		case C2S_PACKET_LOGIN:
+		case CLIENT_PACKET_LOGIN:
 		{
 			players[p_id].lock.lock();
 			strcpy_s(players[p_id].name, p->name);
@@ -1233,7 +1237,7 @@ int main()
 		StartServer();
 		vector<thread> worker_threads;
 		while(!nThreadCnt){};
-		for(int i = 0; i < nThreadCnt; ++i)
+		for(int i = 0; i < 1; ++i)
 		{
 			worker_threads.emplace_back(WorkerThread);
 		}

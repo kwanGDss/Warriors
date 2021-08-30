@@ -7,7 +7,7 @@ using namespace std;
 
 #define MAX_CLIENTS 100
 
-enum EPacketType
+enum class EPacketType
 {
 	SIGNUP_PLAYER,
 	LOGIN_PLAYER,
