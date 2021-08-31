@@ -80,9 +80,12 @@ void CALLBACK recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DW
 }
 
 void process_packet(int p_id, unsigned char* packet);
+void disconnect(int p_id);
 
 void WorkerThread()
 {
+	char* buf = const_cast<char*>("BBaKKi");
+	Send_Login_Packet(&buf);
 	while (true)
 	{
 		DWORD num_byte;
@@ -95,7 +98,7 @@ void WorkerThread()
 		{
 			int err = WSAGetLastError();
 			printf_s("GQCS {%d} error ", err);
-			//disconnect(key);
+			disconnect(key);
 			continue;
 		}
 		SOCKETINFO* socketinfo = reinterpret_cast<SOCKETINFO*> (over);
@@ -123,91 +126,27 @@ void WorkerThread()
 			{
 				if (num_byte != socketinfo->wsabuf[0].len)
 				{
-					//disconnect(key);
+					disconnect(key);
 					delete socketinfo;
 				}
 				break;
 			}
 			case EPacketType::LOGIN_PLAYER:
 			{
-				char* ps = reinterpret_cast<char*> (socketinfo->messagebuf);
-				SOCKET socket = socketinfo->client_socket;
-				//int p_id = get_new_player_id();
-				//if (-1 == p_id)
-				{
-					closesocket(socket);
-					//do_accept(listenSocket, socketinfo);
-					continue;
-				}
-
-
-				/*SESSION& n_s = players[p_id];
-
-				n_s.lock.lock();
-				n_s.state = S_STATE::STATE_CONNECTED;
-				n_s.id = p_id;
-				n_s.prev_recv = 0;
-				n_s.socket = socket;
-				n_s.x = rand() % 10;
-				n_s.y = rand() % 10;
-				memcpy_s(n_s.name, sizeof(ps), ps, sizeof(ps));
-				n_s.lock.unlock();*/
-
-				//CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket), hIOCP, p_id, 0);
-				
-				//printf_s("%s", n_s.name);
-
-				//do_recv(p_id);
-				//do_accept(listenSocket, socketinfo);
-	
-				cout << "New player [" << ps << "] !" << endl;
 				break;
 			}
 
 			default:
 				cout << "Unknown Packet Type" << endl;
-				exit(-1);
+				break;
 		}
 	}
 }
 
-void do_accept(SOCKET s_socket, SOCKETINFO* a_over)
-{
-	SOCKET c_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-	memset(&a_over->overlapped, 0, sizeof(a_over->overlapped));
-	DWORD num_byte;
-	int addr_size = sizeof(SOCKADDR_IN) + 16;
-	a_over->client_socket = c_socket;
-	BOOL ret = AcceptEx(s_socket, c_socket, a_over->messagebuf, 0, addr_size, addr_size, &num_byte, &a_over->overlapped);
-	if (FALSE == ret)
-	{
-		int err = WSAGetLastError();
-		if (WSA_IO_PENDING != err)
-		{
-			printf_s("Accept : {%d}", err);
-			exit(-1);
-		}
-	}
-}
 
 void disconnect(int p_id)
 {
-	/*players[p_id].lock.lock();
-	players[p_id].state = S_STATE::STATE_CONNECTED;
-	closesocket(players[p_id].socket);
-	players[p_id].state = S_STATE::STATE_FREE;
-	players[p_id].lock.unlock();
-	for (auto& cl : players)
-	{
-		cl.lock.lock();
-		if (S_STATE::STATE_INGAME != cl.state) 
-		{
-			cl.lock.unlock();
-			continue; 
-		}
-		//send_pc_logout(cl.id, p_id);
-		cl.lock.unlock();
-	}*/
+	return;
 }
 
 void do_recv(int p_id)
@@ -228,21 +167,7 @@ void process_packet(int p_id, unsigned char* packet)
 	{
 		case CLIENT_PACKET_LOGIN:
 		{
-			/*players[p_id].lock.lock();
-			strcpy_s(players[p_id].name, p->name);
-			players[p_id].x = rand() % BOARD_WIDTH;
-			players[p_id].y = rand() % BOARD_HEIGHT;
-			send_login_info(p_id);
-			players[p_id].state = S_STATE::STATE_INGAME;
-			players[p_id].lock.unlock();
 
-			for (auto& pl : players)
-			{
-				if (pl.id == p_id) { continue; }
-				if (pl.state != S_STATE::STATE_INGAME) {continue; }
-				send_pc_login(p_id, pl.id);
-				send_pc_login(pl.id, p_id);
-			}*/
 			break;
 		}
 		case C2S_PACKET_MOVE:
