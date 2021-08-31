@@ -13,6 +13,11 @@ constexpr int BOARD_HEIGHT = 400;
 constexpr int VIEW_DISTANCE = 5;
 constexpr int WIDTH_INDEX = BOARD_WIDTH / VIEW_DISTANCE;
 
+constexpr int NOT_INGAME = -1;
+constexpr int TO_SERVER = 0;
+constexpr int TO_CLIENT = 1;
+constexpr int LOGIN_ASK = 2;
+
 enum class OP_TYPE { OP_RECV = 0, OP_SEND = 1, OP_ACCEPT = 2, OP_DO_MOVE = 3};
 enum class S_STATE { STATE_FREE = 0, STATE_CONNECTED = 1, STATE_INGAME = 2 };
 enum class V_STATE { STATE_NEW = 0, STATE_MOVE = 1, STATE_DELETE = 2 };
@@ -20,14 +25,14 @@ enum class V_STATE { STATE_NEW = 0, STATE_MOVE = 1, STATE_DELETE = 2 };
 struct client_packet_login
 {
 	unsigned char	size;
-	EPacketType		type;
+	unsigned char	type;
 	char			name[MAX_NAME];
 };
 
 struct c2s_packet_move
 {
 	unsigned char	size;
-	EPacketType		type;
+	unsigned char	type;
 	char			dir; // 0 UP 1 RIGHT 2 DOWN 3 LEFT
 	int				move_time;
 };
@@ -35,7 +40,7 @@ struct c2s_packet_move
 struct server_packet_login
 {
 	unsigned char	size;
-	EPacketType		type;
+	unsigned char	type;
 	int				id;
 	short			x, y;
 	short			hp, level;
@@ -44,7 +49,7 @@ struct server_packet_login
 struct s2c_packet_pc_login
 {
 	unsigned char	size;
-	EPacketType		type;
+	unsigned char	type;
 	int				id;
 	char			name[MAX_NAME];
 	short			x, y;
@@ -54,7 +59,7 @@ struct s2c_packet_pc_login
 struct s2c_packet_pc_move
 {
 	unsigned char	size;
-	EPacketType		type;
+	unsigned char	type;
 	int				id;
 	short			x, y;
 	int				move_time;
@@ -63,21 +68,21 @@ struct s2c_packet_pc_move
 struct s2c_packet_pc_logout
 {
 	unsigned char	size;
-	EPacketType		type;
+	unsigned char	type;
 	int				id;
 };
 
 struct s2s_packet_pc_enter_vp
 {
 	unsigned char	size;
-	EPacketType		type;
+	unsigned char	type;
 	int				id;
 };
 
 struct s2s_packet_pc_move_vp
 {
 	unsigned char	size;
-	EPacketType		type;
+	unsigned char	type;
 	int				id;
 	short			x, y;
 	int				move_time;
@@ -86,7 +91,7 @@ struct s2s_packet_pc_move_vp
 struct s2s_packet_pc_out_vp
 {
 	unsigned char	size;
-	EPacketType		type;
+	unsigned char	type;
 	int				id;
 };
 
