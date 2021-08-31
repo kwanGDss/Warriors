@@ -30,14 +30,15 @@ SOCKET serverSocket;
 WSABUF s_wsabuf[1];
 WSABUF r_wsabuf[1];
 
+void CALLBACK send_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags);
 void CALLBACK recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags);
 
-void Send_Packet(void* buf)
+void Send_Packet(void* buf, EPacketType packet_type)
 {
 	SOCKETINFO* socketinfo = new SOCKETINFO;
 
 	unsigned char packet_size = reinterpret_cast<unsigned char*>(buf)[0];
-	socketinfo->packettype = EPacketType::RECV_PLAYER;
+	socketinfo->packettype = packet_type;
 	memset(&socketinfo->overlapped, 0, sizeof(socketinfo->overlapped));
 	memcpy(socketinfo->messagebuf, buf, packet_size);
 	socketinfo->wsabuf[0].buf = reinterpret_cast<char*>(socketinfo->messagebuf);
@@ -45,6 +46,7 @@ void Send_Packet(void* buf)
 
 	WSASend(serverSocket, socketinfo->wsabuf, 1, 0, 0, &socketinfo->overlapped, 0);
 }
+
 
 void Send_Login_Packet(void *buf)
 {
@@ -77,11 +79,11 @@ float Reduce_Health(float GetDamaged)
 	return HealthValue;
 }
 
-void CALLBACK recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags)
+/*void CALLBACK recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags)
 {
 	DWORD r_flag = 0;
 	WSARecv(serverSocket, r_wsabuf, 1, 0, &r_flag, over, recv_callback);
-}
+}*/
 
 void do_play();
 void view_world_map();
@@ -194,9 +196,9 @@ void recv_packet()
 	process_packet();*/
 }
 
-void send_packet(void* buf, char packet_type)
+/*void send_packet(void* buf, char packet_type)
 {
-	/*SOCKETINFO* s_info = new SOCKETINFO;
+	SOCKETINFO* s_info = new SOCKETINFO;
 
 	unsigned char packet_size = reinterpret_cast<unsigned char*>(buf)[0];
 	s_info->m_packet_type[0] = TO_SERVER;
@@ -208,8 +210,8 @@ void send_packet(void* buf, char packet_type)
 
 	WSASend(serverSocket, s_info->m_wsabuf, 1, 0, 0, &s_info->m_over, 0);
 	
-	recv_packet();*/
-}
+	recv_packet();
+}*/
 
 void send_login_packet()
 {
@@ -328,7 +330,7 @@ void recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags
 
 void send_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags)
 {
-	
+
 }
 
 
@@ -353,6 +355,9 @@ int main(void)
 	WSAConnect(serverSocket, reinterpret_cast<sockaddr *>(&serverAddr), sizeof(serverAddr), NULL, NULL, 0, 0);
 
 	char* buf = const_cast<char*>("BBaKKi");
+	Send_Login_Packet(buf);
+
+	buf = const_cast<char*>("ParkKiSeok");
 	Send_Login_Packet(buf);
 
 	thread play {do_play};

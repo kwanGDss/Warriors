@@ -160,8 +160,10 @@ void WorkerThread()
 			disconnect(key);
 			continue;
 		}
+
 		SOCKETINFO* socketinfo = reinterpret_cast<SOCKETINFO*> (over);
-		switch (socketinfo->packettype)
+		client_packet_login *cl = reinterpret_cast<client_packet_login*>(socketinfo);
+		switch (cl->type)
 		{
 		case EPacketType::SEND_PLAYER:
 			{
@@ -192,7 +194,7 @@ void WorkerThread()
 			}
 		case EPacketType::LOGIN_PLAYER:
 			{
-				//char* ps = reinterpret_cast<char*> (socketinfo->wsabuf->buf);
+				client_packet_login* ps = reinterpret_cast<client_packet_login*> (socketinfo->messagebuf);
 				SOCKET socket = socketinfo->client_socket;
 				int p_id = get_new_player_id();
 				if (-1 == p_id)
@@ -209,20 +211,43 @@ void WorkerThread()
 				n_s.state = S_STATE::STATE_CONNECTED;
 				n_s.id = p_id;
 				n_s.prev_recv = 0;
+				n_s.recv_over.packettype = EPacketType::SIGNUP_PLAYER;
 				n_s.socket = socket;
 				n_s.x = rand() % 10;
 				n_s.y = rand() % 10;
-				//strcpy_s(n_s.name, ps);
+				strcpy_s(n_s.name, ps->name);
 				n_s.lock.unlock();
 
 				CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket), hIOCP, p_id, 0);
-				
-				printf_s("%s", n_s.name);
 
 				do_recv(p_id);
 				do_accept(listenSocket, socketinfo);
 	
 				cout << "New player [" << p_id << "] !" << endl;
+				break;
+			}
+
+		case EPacketType::SIGNUP_PLAYER:
+			{
+				unsigned char* ps = socketinfo->messagebuf;
+				client_packet_login* packet = reinterpret_cast<client_packet_login*>(ps);
+				players[key].lock.lock();
+				strcpy_s(players[key].name, packet->name);
+				cout << packet->name << endl;
+				players[key].x = rand() % 10;
+				players[key].y = rand() % 10;
+				/*sc_packet_login_ok packet;
+				packet.size = sizeof(packet);
+				packet.type = SC_LOGIN_OK;
+				packet.id = p_id;
+				packet.x = players[p_id].m_x;
+				packet.y = players[p_id].m_y;
+				packet.HP = players[p_id].hp;
+				packet.LEVEL = players[p_id].level;
+				packet.EXP = players[p_id].exp;
+
+				send_packet(p_id, &packet, SC_LOGIN_OK);*/
+				players[key].lock.unlock();
 				break;
 			}
 
@@ -288,7 +313,7 @@ void SignUp(int p_id)
 {
 
 }
-
+/*
 void send_login_info(int p_id)
 {
 	server_packet_login packet;
@@ -334,7 +359,7 @@ void send_pc_logout(int c_id, int p_id)
 	packet.type = S2C_PACKET_PC_LOGOUT;
 	send_packet(c_id, &packet);
 }
-
+*/
 void disconnect(int p_id)
 {
 	players[p_id].lock.lock();
@@ -350,7 +375,7 @@ void disconnect(int p_id)
 			cl.lock.unlock();
 			continue; 
 		}
-		send_pc_logout(cl.id, p_id);
+		//send_pc_logout(cl.id, p_id);
 		cl.lock.unlock();
 	}
 }
@@ -363,6 +388,7 @@ void do_recv(int p_id)
 	rsocketinfo.wsabuf[0].buf = reinterpret_cast<CHAR*>(rsocketinfo.messagebuf) + pl.prev_recv;
 	rsocketinfo.wsabuf[0].len = MAX_BUFFER - pl.prev_recv;
 	DWORD r_flag = 0;
+
 	WSARecv(pl.socket, rsocketinfo.wsabuf, 1, 0, &r_flag, &rsocketinfo.overlapped, 0);
 }
 
@@ -371,13 +397,13 @@ void process_packet(int p_id, unsigned char* packet)
 	client_packet_login* p = reinterpret_cast<client_packet_login*>(packet);
 	switch (p->type)
 	{
-		case CLIENT_PACKET_LOGIN:
+		//case CLIENT_PACKET_LOGIN:
 		{
 			players[p_id].lock.lock();
 			strcpy_s(players[p_id].name, p->name);
 			players[p_id].x = rand() % BOARD_WIDTH;
 			players[p_id].y = rand() % BOARD_HEIGHT;
-			send_login_info(p_id);
+			//send_login_info(p_id);
 			players[p_id].state = S_STATE::STATE_INGAME;
 			players[p_id].lock.unlock();
 
@@ -385,12 +411,12 @@ void process_packet(int p_id, unsigned char* packet)
 			{
 				if (pl.id == p_id) { continue; }
 				if (pl.state != S_STATE::STATE_INGAME) {continue; }
-				send_pc_login(p_id, pl.id);
-				send_pc_login(pl.id, p_id);
+				//send_pc_login(p_id, pl.id);
+				//send_pc_login(pl.id, p_id);
 			}
 			break;
 		}
-		case C2S_PACKET_MOVE:
+		//case C2S_PACKET_MOVE:
 		{
 			c2s_packet_move* move_packet = reinterpret_cast<c2s_packet_move*>(packet);
 			break;
@@ -399,7 +425,6 @@ void process_packet(int p_id, unsigned char* packet)
 			cout << "Unknown" << endl;
 	}
 }
-
 
 int main()
 {
@@ -469,17 +494,32 @@ int main()
 	}
 
 	// Completion Port 객체 생성
-	hIOCP = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
+	hIOCP = CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 0);
 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(listenSocket), hIOCP, (DWORD)100000, 0);
-
 
 	SOCKETINFO a_over;
 	a_over.packettype = EPacketType::LOGIN_PLAYER;
-	do_accept(listenSocket, &a_over);
+	//do_accept(listenSocket, &a_over);
 
 	// 클라이언트 정보
-	int addrLen = sizeof(SOCKADDR_IN);
+	int addrLen = sizeof(SOCKADDR_IN) + 16;
+	DWORD num_byte;
 	SOCKET clientSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+	if(clientSocket == SOCKET_ERROR) {return -1;}
+
+	memset(&a_over.overlapped, 0, sizeof(a_over.overlapped));
+	a_over.client_socket = clientSocket;
+
+	BOOL result = AcceptEx(listenSocket, clientSocket, a_over.messagebuf, 0, addrLen, addrLen, &num_byte, &a_over.overlapped);
+
+	if (FALSE == result)
+	{
+		if (WSA_IO_PENDING != WSAGetLastError())
+		{
+			cout << "Accept error" << endl;
+			exit(-1);
+		}
+	}
 
 	printf_s("Server Start...\n");
 
