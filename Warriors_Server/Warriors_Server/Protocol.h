@@ -58,7 +58,6 @@ struct client_packet_move
 	unsigned char	size;
 	unsigned char	type;
 	char			dir; // 0 UP 1 RIGHT 2 DOWN 3 LEFT
-	int				move_time;
 };
 
 struct client_packet_reduce_stamina
@@ -118,7 +117,7 @@ struct server_packet_move
 	unsigned char	size;
 	unsigned char	type;
 	int				id;
-	int			x, y;
+	int				x, y;
 };
 
 struct server_packet_logout

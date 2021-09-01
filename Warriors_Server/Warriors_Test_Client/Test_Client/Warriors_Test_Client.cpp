@@ -22,6 +22,29 @@ struct SOCKETINFO
 	unsigned char	m_buf[1024];
 };
 
+struct PLAYERINFO
+{
+	int						id = NOT_INGAME;				// -1 : not ingame / 1 : ingame
+	unsigned char			m_prev_recv = 0;
+	SOCKETINFO				m_recv_over;
+	SOCKET					m_socket = -1;			// -1 : not connect / 1~ : connect 
+
+	mutex					m_lock;
+	char					m_name[16];
+	int						m_x = rand() % 10, m_y = rand() % 10;
+	float					m_hp = 1.f, m_stamina = 1.f;
+
+	PLAYERINFO& operator = (const PLAYERINFO& Right)
+	{
+		m_x = Right.m_x;
+		m_y = Right.m_y;
+		m_hp = Right.m_hp;
+		m_stamina = Right.m_stamina;
+		strcpy_s(m_name, Right.m_name);
+
+		return *this;
+	}
+};
 
 float EnergyValue = 1.f;
 float HealthValue = 1.f;
@@ -36,12 +59,9 @@ int result{0};
 SOCKETINFO s_wsabuf;
 SOCKETINFO r_wsabuf;
 
-SOCKET serverSocket;
 
 void do_play();
-void view_world_map();
 void show_view_map();
-void process_postion_packet();
 void CALLBACK recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags);
 void CALLBACK send_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags);
 
@@ -55,12 +75,6 @@ void show_view_map()
 {
 }
 
-void process_postion_packet()
-{
-	server_packet_move* packet = reinterpret_cast<server_packet_move*>(r_wsabuf.m_wsabuf[0].buf);
-	player->m_x = packet->x;
-	player->m_y = packet->y;
-}
 
 void process_login_packet()
 {
@@ -72,66 +86,52 @@ void process_login_packet()
 	player->m_stamina = packet->stamina;
 }
 
+void process_update_status()
+{
+	server_packet_players_status* packet = reinterpret_cast<server_packet_players_status*>(r_wsabuf.m_wsabuf[0].buf);
+	player->m_stamina = packet->stamina;
+	player->m_hp = packet->health;
+}
+
+void process_update_position()
+{
+	server_packet_move* packet = reinterpret_cast<server_packet_move*>(r_wsabuf.m_wsabuf[0].buf);
+	player->m_x = packet->x;
+	player->m_y = packet->y;
+}
+
 void process_add_obj()
 {
-	sc_packet_add_object* packet = reinterpret_cast<sc_packet_add_object*>(r_wsabuf.m_wsabuf[0].buf);
-
-	Obj obj;
-
-	obj.id = packet->id;
-	obj.obj_class = packet->obj_class;
-	obj.x_locate = packet->x;
-	obj.y_locate = packet->y;
-
-	obj.HP = packet->HP;
-	obj.LEVEL = packet->LEVEL;
-	obj.EXP = packet->EXP;
-
-	strcpy_s(obj.name, packet->name);
-
-	Others.insert({obj.id, obj});
 }
 
 void process_remove_obj()
 {
-	sc_packet_remove_object* packet = reinterpret_cast<sc_packet_remove_object*>(r_wsabuf.m_wsabuf[0].buf);
-
-	Others.erase((int)(packet->id));
 }
 
 void process_packet()
 {
-	sc_packet_add_object* ex_over = reinterpret_cast<sc_packet_add_object *>(r_wsabuf.m_buf);
+	server_packet_login* ex_over = reinterpret_cast<server_packet_login *>(r_wsabuf.m_buf);
 
 	cout << "recv start" << endl;
 
 	switch(ex_over->type)
 	{
-	case SC_LOGIN_OK:
-		cout << "SC_LOGIN_OK" << endl;
+	case SERVER_LOGIN_OK:
+		cout << "LOGIN_OK" << endl;
 		process_login_packet();
 		break;
-	case SC_LOGIN_FAIL:
-		cout << "SC_LOGIN_FAIL" << endl;
+	case SERVER_LOGIN_FAIL:
+		cout << "LOGIN_FAIL" << endl;
 		break;
-	case SC_POSITION:
-		cout << "SC_POSITION" << endl;
-		process_postion_packet();
+	case SERVER_PLAYERS_STATUS:
+		cout << "UPDATE_STATUS" << endl;
+
 		break;
-	case SC_CHAT:
-		cout << "SC_CHAT" << endl;
+	case SERVER_PLAYER_MOVE:
+		cout << "UPDATE_POSITION" << endl;
+		process_update_position();
 		break;
-	case SC_STAT_CHANGE:
-		cout << "SC_STAT_CHANGE" << endl;
-		break;
-	case SC_REMOVE_OBJECT:
-		cout << "SC_REMOVE_OBJECT" << endl;
-		process_remove_obj();
-		break;
-	case SC_ADD_OBJECT:
-		cout << "SC_ADD_OBJECT" << endl;
-		process_add_obj();
-		break;
+	
 	}
 }
 
@@ -166,17 +166,17 @@ void send_packet(void* buf, char packet_type)
 
 void send_login_packet()
 {
-	cs_packet_login packet;
+	client_packet_login packet;
 
 	packet.size = sizeof(packet);
-	packet.type = CS_LOGIN;
-	strcpy_s(packet.player_id, "BBaKKi");
+	packet.type = CLIENT_LOGIN;
+	strcpy_s(packet.name, "BBaKKi");
 
 	SOCKETINFO* s_info = new SOCKETINFO;
 
 	unsigned char packet_size = reinterpret_cast<unsigned char*>(&packet)[0];
 	s_info->m_packet_type[0] = TO_SERVER;
-	s_info->m_packet_type[1] = CS_LOGIN;
+	s_info->m_packet_type[1] = CLIENT_LOGIN;
 	memset(&s_info->m_over, 0, sizeof(s_info->m_over));
 	memcpy(s_info->m_buf, &packet, packet_size);
 	s_info->m_wsabuf[0].buf = reinterpret_cast<char*>(s_info->m_buf);
@@ -187,130 +187,65 @@ void send_login_packet()
 	recv_packet();
 }
 
-void send_move_packet(char key_input)
+void send_move_packet()
 {
-	cs_packet_move packet;
+	client_packet_move packet;
 	packet.size = sizeof(packet);
-	packet.type = CS_MOVE;
-	switch(key_input)
-	{
-	case UP:
-	{
-		packet.direction = 0;
-		break;
-	}
-	case DOWN:
-	{
-		packet.direction = 1;
-		break;
-	}
-	case LEFT:
-	{
-		packet.direction = 2;
-		break;
-	}
-	case RIGHT:
-	{
-		packet.direction = 3;
-		break;
-	}
-	}
-	packet.move_time = 1;
+	packet.type = CLIENT_MOVE;
+	packet.dir = 3;
 
-	send_packet(&packet, CS_MOVE);
+	send_packet(&packet, CLIENT_MOVE);
 }
 
 void send_attack_packet()
 {
-	cs_packet_attack packet;
+	client_packet_attack packet;
 	packet.size = sizeof(packet);
-	packet.type = CS_ATTACK;
+	packet.type = CLIENT_ATTACK;
 
-	send_packet(&packet, CS_ATTACK);
+	send_packet(&packet, CLIENT_ATTACK);
 }
 
-void send_chat_packet(char *mess)
-{
-	cs_packet_chat packet;
-	packet.size = sizeof(packet);
-	packet.type = CS_CHAT;
-	strcpy_s(packet.message, mess);
-
-	send_packet(&packet, CS_CHAT);
-}
 
 void send_logout_packet()
 {
-	cs_packet_logout packet;
+	client_packet_logout packet;
 	packet.size = sizeof(packet);
-	packet.type = CS_LOGOUT;
+	packet.type = CLIENT_LOGOUT;
 
-	send_packet(&packet, CS_LOGOUT);
-}
-
-void send_teleport_packet()
-{
-	cs_packet_teleport packet;
-	packet.size = sizeof(packet);
-	packet.type = CS_TELEPORT;
-
-	send_packet(&packet, CS_TELEPORT);
+	send_packet(&packet, CLIENT_LOGOUT);
 }
 
 void do_play()
 {
+	int i = 0;
 	while(true)
 	{
-		show_view_map();
-		if(_kbhit() && (is_cursor_key = _getch()))
+		if(!i)
 		{
-			if(is_cursor_key == -32)
-			{
-				key_input[0] = _getch();
-				send_move_packet(key_input[0]);
-				key_input[0] = '0';
-			}
-			else if(is_cursor_key == 'q' || is_cursor_key == 'Q') 
-			{
-				//
-			}
+			send_move_packet();
+			i++;
 		}
+				
 	}
-}
-
-void view_world_map()
-{
-	
 }
 
 void recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags)
 {
-	exit(-1);
 }
 
 void send_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags)
 {
-	
-
 }
 
 int main(void)
 {
 	std::wcout.imbue(std::locale("korean"));
 
-	key_input[0] = '0';
-
 	s_wsabuf.m_wsabuf[0].buf = key_input;
 	s_wsabuf.m_wsabuf[0].len = 1;
 
-	char server_IP[15];
-	char user_ID[20];
-
-	cout << "Enter Server IP : ";
-	cin >> server_IP;
-
-	cout << "Enter Your ID : ";
-	cin >> user_ID;
+	char *server_IP = const_cast<char*>("127.0.0.1");
 
 	WSADATA WSAData;
 	if(WSAStartup(MAKEWORD(2, 2), &WSAData) != 0) return 1;
@@ -326,7 +261,6 @@ int main(void)
 	WSAConnect(serverSocket, reinterpret_cast<sockaddr *>(&serverAddr), sizeof(serverAddr), NULL, NULL, 0, 0);
 	
 	DWORD r_flag = 0;
-	memset(&s_over, 0, sizeof(s_over));
 
 	send_login_packet();
 
