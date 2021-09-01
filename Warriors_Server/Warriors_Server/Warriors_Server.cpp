@@ -138,7 +138,7 @@ void do_recv(int p_id)
 	SOCKETINFO& r_over = pl.m_recv_over;
 	memset(&r_over.m_over, 0, sizeof(r_over.m_over));
 	r_over.m_wsabuf[0].buf = reinterpret_cast<CHAR*>(r_over.m_buf) + pl.m_prev_recv;
-	r_over.m_wsabuf[0].len = 4096 - pl.m_prev_recv;
+	r_over.m_wsabuf[0].len = 1024 - pl.m_prev_recv;
 	DWORD r_flag = 0;
 
 	WSARecv(pl.m_socket, r_over.m_wsabuf, 1, 0, &r_flag, &r_over.m_over, 0);
@@ -147,7 +147,7 @@ void do_recv(int p_id)
 void process_packet_login(int p_id, client_packet_login* packet)
 {
 	players[p_id].m_lock.lock();
-	strcpy_s(players[p_id].m_name, packet->player_id);
+	strcpy_s(players[p_id].m_name, packet->name);
 	players[p_id].m_x = 3;
 	players[p_id].m_y = 3;
 	send_login_ok(p_id);
@@ -159,7 +159,7 @@ void process_packet_move(int p_id, client_packet_move* packet)
 	player_move(p_id, packet->dir);
 }
 
-//void process_packet_attack(int p_id, cs_packet_attack* packet)
+void process_packet_attack(int p_id, client_packet_attack* packet)
 {
 	//
 }

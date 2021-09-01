@@ -15,12 +15,13 @@ using namespace std;
 
 struct SOCKETINFO
 {
-	WSAOVERLAPPED	overlapped;
-	WSABUF			wsabuf[1];
-	unsigned char	messagebuf[MAX_BUFFER];
-	EPacketType		packettype;
-	SOCKET			client_socket;
+	WSAOVERLAPPED	m_over;
+	WSABUF			m_wsabuf[1];
+	char			m_packet_type[2];
+	SOCKET			m_clientsocket;
+	unsigned char	m_buf[1024];
 };
+
 
 float EnergyValue = 1.f;
 float HealthValue = 1.f;
@@ -32,6 +33,8 @@ char is_cursor_key {0};
 
 int result{0};
 
+SOCKETINFO s_wsabuf;
+SOCKETINFO r_wsabuf;
 
 SOCKET serverSocket;
 
@@ -42,140 +45,31 @@ void process_postion_packet();
 void CALLBACK recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags);
 void CALLBACK send_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags);
 
-Player player_pawn;
+PLAYERINFO *player = new PLAYERINFO;
 
 void setting_map()
 {
-	view_map[10 * 20 + 10] = '0';
-	for(int i = 0 ; i < 10 ; ++i)
-	{
-		for(int j = 0; j < 10; ++j)
-		{
-			if(((player_pawn.x_locate - (10 - i)) < 0) || ((player_pawn.y_locate - (10 - j)) < 0))
-			{
-				play_map[i][j].type = -1;
-				view_map[i + j * 20] = 'X';
-			}
-		}
-
-		for(int j = 10; j < 20; ++j)
-		{
-			if(((player_pawn.x_locate - (10 - i)) < 0) || ((player_pawn.y_locate + (j - 10)) > WORLD_HEIGHT - 1))
-			{
-				play_map[i][j].type = -1;
-				view_map[i + j * 20] = 'X';
-			}
-		}
-	}
-
-	for(int i = 10 ; i < 20 ; ++i)
-	{
-		for(int j = 0; j < 10; ++j)
-		{
-			if(((player_pawn.x_locate + (i - 10)) > WORLD_WIDTH - 1) || ((player_pawn.y_locate - (10 - j)) < 0))
-			{
-				play_map[i][j].type = -1;
-				view_map[i + j * 20] = 'X';
-			}
-		}
-
-		for(int j = 10; j < 20; ++j)
-		{
-			if(((player_pawn.x_locate + (i - 10)) > WORLD_WIDTH) || ((player_pawn.y_locate + (j - 10)) > WORLD_HEIGHT))
-			{
-				play_map[i][j].type = -1;
-				view_map[i + j * 20] = 'X';
-			}
-		}
-	}
-	int x, y;
-	for(auto &other : Others)
-	{
-		if(other.second.obj_class == (int)OBJ_TYPE::OBJ_NPC)
-		{
-			x = (other.second.x_locate - player_pawn.x_locate) + 10;
-			y = (other.second.y_locate - player_pawn.y_locate) + 10;
-				
-			play_map[x][y].type = 2;
-			view_map[x + y * 20] = 'N';
-		}
-		else if(other.second.obj_class == (int)OBJ_TYPE::OBJ_PLAYER)
-		{
-			x = (other.second.x_locate - player_pawn.x_locate) + 10;
-			y = (other.second.y_locate - player_pawn.y_locate) + 10;
-
-			play_map[x][y].type = 1;
-			view_map[x + y * 20] = 'P';
-		}
-
-	}
 }
 
 void show_view_map()
 {
-	play_map[10][10].type = 1;
-	play_map[10][10].x = player_pawn.x_locate;
-	play_map[10][10].y = player_pawn.y_locate;
-	memset(view_map, ' ', 400);
-
-	setting_map();
-
-	std::system("cls");
-
-	cout << player_pawn.id <<"\' HP : " << player_pawn.HP <<"\n" ;
-	cout << player_pawn.id <<"\' LEVEL : " << player_pawn.LEVEL <<"\n" ;
-	cout << player_pawn.id <<"\' EXP : " << player_pawn.EXP <<"\n" ;
-
-	for(int i = 0; i < 20; i++)
-	{
-		cout << "----------------------------------------------------------------------------------\n";
-		cout << "| " << view_map[i * 20] 
-			<< " | " << view_map[i * 20 + 1]
-			<< " | " << view_map[i * 20 + 2]
-			<< " | " << view_map[i * 20 + 3]
-			<< " | " << view_map[i * 20 + 4]
-			<< " | " << view_map[i * 20 + 5]
-			<< " | " << view_map[i * 20 + 6]
-			<< " | " << view_map[i * 20 + 7]
-			<< " | " << view_map[i * 20 + 8] 
-			<< " | " << view_map[i * 20 + 9]
-			<< " | " << view_map[i * 20 + 10]
-			<< " | " << view_map[i * 20 + 11]
-			<< " | " << view_map[i * 20 + 12]
-			<< " | " << view_map[i * 20 + 13]
-			<< " | " << view_map[i * 20 + 14]
-			<< " | " << view_map[i * 20 + 15]
-			<< " | " << view_map[i * 20 + 16]
-			<< " | " << view_map[i * 20 + 17]
-			<< " | " << view_map[i * 20 + 18]
-			<< " | " << view_map[i * 20 + 19]
-			<< " |\n";
-	
-		
-	}
-
-	cout << "----------------------------------------------------------------------------------\n";
-	Sleep(16);
 }
 
 void process_postion_packet()
 {
-	sc_packet_position* packet = reinterpret_cast<sc_packet_position*>(r_wsabuf.m_wsabuf[0].buf);
-	player_pawn.x_locate = packet->x;
-	player_pawn.y_locate = packet->y;
+	server_packet_move* packet = reinterpret_cast<server_packet_move*>(r_wsabuf.m_wsabuf[0].buf);
+	player->m_x = packet->x;
+	player->m_y = packet->y;
 }
 
 void process_login_packet()
 {
-	sc_packet_login_ok* packet = reinterpret_cast<sc_packet_login_ok*>(r_wsabuf.m_wsabuf[0].buf);
+	server_packet_login_ok* packet = reinterpret_cast<server_packet_login_ok*>(r_wsabuf.m_wsabuf[0].buf);
 
-	player_pawn.id = packet->id;
-	player_pawn.x_locate = packet->x;
-	player_pawn.y_locate = packet->y;
+	player->id = packet->id;
 
-	player_pawn.HP = packet->HP;
-	player_pawn.LEVEL = packet->LEVEL;
-	player_pawn.EXP = packet->EXP;
+	player->m_hp = packet->hp;
+	player->m_stamina = packet->stamina;
 }
 
 void process_add_obj()

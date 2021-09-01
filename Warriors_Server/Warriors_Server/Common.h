@@ -19,6 +19,7 @@ struct SOCKETINFO
 	unsigned char	m_buf[1024];
 };
 
+
 struct PLAYERINFO
 {
 	int						id = NOT_INGAME;				// -1 : not ingame / 1 : ingame

@@ -4,14 +4,7 @@ constexpr int MAX_NAME = 16;
 
 #pragma pack (push, 1)
 
-struct Player
-{
-	char id[16];
-	float hp = 1.f, stamina = 1.f;
-	short x_locate, y_locate;
-};
-
-constexpr int MAX_BUFFER = 4096;
+constexpr int MAX_BUFFER = 1024;
 constexpr int SERVER_PORT = 8000;
 constexpr int MAX_USER = 100;
 
