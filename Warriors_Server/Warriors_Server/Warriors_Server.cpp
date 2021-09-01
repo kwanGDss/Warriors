@@ -172,14 +172,13 @@ void process_packet_logout(int p_id, client_packet_logout* packet)
 
 int get_new_player_id()
 {
-	for (int i = 0; i < NPC_ID_START; ++i)
+	for (int i = 0; i < MAX_USER; ++i)
 	{
 		if (listenSocket == i) { continue; }
 		players[i].m_lock.lock();
 		if (NOT_INGAME == players[i].id)
 		{
 			players[i].id = i; 
-			players[i].m_viewlist.clear();
 			players[i].m_lock.unlock();
 			return i;
 		}
@@ -210,86 +209,14 @@ void disconnect(int p_id)
 {
 	
 	players[p_id].m_lock.lock();
-	unordered_set<int> old_vl = players[p_id].m_viewlist;
 	players[p_id].id = NOT_INGAME;
 	closesocket(players[p_id].m_socket);
 	players[p_id].m_lock.unlock();
-	for (auto& cl : old_vl)
-	{
-		if (true == is_npc(cl)) { continue; }
-		if(cl == p_id) {continue;}
-		players[cl].m_lock.lock();
-		if (NOT_INGAME == players[cl].id)
-		{
-			players[cl].m_lock.unlock();
-			continue; 
-		}
-		send_remove_object(players[cl].id, p_id);
-		players[cl].m_lock.unlock();
-	}
 }
 
 void earn_exp(int p_id, int exp)
 {
 	PLAYERINFO &player = players[p_id];
-	switch(player.level)
-	{
-	case 1:
-		if((player.exp + exp) > 100) 
-		{
-			player.level = 2;
-			player.exp = player.exp + exp - 100;
-		}
-		else
-		{
-			player.exp += exp;
-		}
-		break;
-	case 2:
-		if((player.exp + exp) > 200) 
-		{
-			player.level = 3;
-			player.exp = player.exp + exp - 200;
-		}
-		else
-		{
-			player.exp += exp;
-		}
-		break;
-	case 3:
-		if((player.exp + exp) > 400) 
-		{
-			player.level = 4;
-			player.exp = player.exp + exp - 400;
-		}
-		else
-		{
-			player.exp += exp;
-		}
-		break;
-	case 4:
-		if((player.exp + exp) > 800) 
-		{
-			player.level = 5;
-			player.exp = player.exp + exp - 800;
-		}
-		else
-		{
-			player.exp += exp;
-		}
-		break;
-	case 5:
-		if((player.exp + exp) > 1600) 
-		{
-			player.level = 6;
-			player.exp = player.exp + exp - 1600;
-		}
-		else
-		{
-			player.exp += exp;
-		}
-		break;
-	}
 }
 
 void go_start_location(int p_id)
@@ -299,55 +226,7 @@ void go_start_location(int p_id)
 
 void player_dead(int p_id)
 {
-	players[p_id].exp /= 2;
-	players[p_id].hp = 30;
-
 	go_start_location(p_id);
-}
-
-void do_random_move_npc(int id)
-{
-	unordered_set <int> old_vl;
-	for (int i = 0; i < NPC_ID_START; ++i)
-	{
-		if (NOT_INGAME == players[i].id) { continue; }
-		if (true == can_see(id, players[i].id)) {old_vl.insert(players[i].id);}
-	}
-	int x = players[id].m_x;
-	int y = players[id].m_y;
-	switch (rand() % 4)
-	{
-	case 0: if(x > 0) x--; break;
-	case 1: if(x < (WORLD_WIDTH - 1)) x++; break;
-	case 2: if(y > 0) y--; break;
-	case 3: if(y < (WORLD_HEIGHT - 1)) y++; break;
-	}
-	players[id].m_x = x;
-	players[id].m_y = y;
-
-	unordered_set <int> new_vl;
-	for (int i = 0; i < NPC_ID_START; ++i)
-	{
-		if (NOT_INGAME == players[i].id) { continue; }
-		if (true == can_see(id, players[i].id)) {new_vl.insert(players[i].id);}
-	}
-
-	for (auto pl : old_vl)
-	{
-		if (0 == new_vl.count(pl))
-		{
-			send_remove_object(pl, id);
-		}
-	}
-
-	for(auto pl : new_vl)
-	{
-		if (0 == old_vl.count(pl)) 
-		{
-			send_add_object(pl, id, OBJ_TYPE::OBJ_NPC);
-		}
-		send_position_vp(pl, id);
-	}
 }
 
 void worker()
@@ -371,7 +250,7 @@ void worker()
 			continue;
 		}
 		SOCKETINFO* ex_over = reinterpret_cast<SOCKETINFO*> (over);
-		cs_packet_login* pack = reinterpret_cast<cs_packet_login*>(ex_over->m_buf);
+		client_packet_login* pack = reinterpret_cast<client_packet_login*>(ex_over->m_buf);
 		switch (ex_over->m_packet_type[0])
 		{
 		case TO_SERVER:
@@ -386,36 +265,27 @@ void worker()
 					
 					switch(pack->type)
 					{
-					case CS_LOGIN:
+					case CLIENT_LOGIN:
 						{
-							process_packet_login(key, reinterpret_cast<cs_packet_login*>(ps));
+							process_packet_login(key, reinterpret_cast<client_packet_login*>(ps));
 							break;
 						}
-					case CS_MOVE:
+					case CLIENT_MOVE:
 						{
-							process_packet_move(key, reinterpret_cast<cs_packet_move*>(ps));
+							process_packet_move(key, reinterpret_cast<client_packet_move*>(ps));
 							break;
 						}
-					case CS_ATTACK:
+					case CLIENT_ATTACK:
 						{
-							process_packet_attack(key, reinterpret_cast<cs_packet_attack*>(ps));
+							//process_packet_attack(key, reinterpret_cast<cs_packet_attack*>(ps));
 							break;
 						}	
-					case CS_CHAT:
+					case CLIENT_LOGOUT:
 						{
-							process_packet_chat(key, reinterpret_cast<cs_packet_chat*>(ps));
+							process_packet_logout(key, reinterpret_cast<client_packet_logout*>(ps));
 							break;
 						}
-					case CS_LOGOUT:
-						{
-							process_packet_logout(key, reinterpret_cast<cs_packet_logout*>(ps));
-							break;
-						}
-					case CS_TELEPORT:
-						{
-							process_packet_teleport(key, reinterpret_cast<cs_packet_teleport*>(ps));
-							break;
-						}
+					
 					}
 					remain_data -= packet_size;
 					ps += packet_size;
@@ -430,19 +300,6 @@ void worker()
 				if (num_byte != ex_over->m_wsabuf[0].len) {disconnect(key);}
 				switch(pack->type)
 				{
-				case SC_ADD_OBJECT:
-				{
-					sc_packet_add_object * add_obj_packet = reinterpret_cast<sc_packet_add_object *>(pack);
-					players[key].m_viewlist.insert(add_obj_packet->id);
-					break;
-				}
-					
-				case SC_REMOVE_OBJECT:
-				{
-					sc_packet_remove_object * remove_obj_packet = reinterpret_cast<sc_packet_remove_object *>(pack);
-					players[key].m_viewlist.erase(remove_obj_packet->id);
-					break;
-				}
 					
 				}
 				delete ex_over;
@@ -465,11 +322,11 @@ void worker()
 				n_s.id = p_id;
 				n_s.m_prev_recv = 0;
 				n_s.m_recv_over.m_packet_type[0] = TO_SERVER;
-				n_s.m_recv_over.m_packet_type[1] = CS_LOGIN;
+				n_s.m_recv_over.m_packet_type[1] = CLIENT_LOGIN;
 				n_s.m_socket = c_socket;
 				n_s.m_x = 3;
 				n_s.m_y = 3;
-				n_s.m_namebuf[0] = 0;
+				n_s.m_name[0] = 0;
 				n_s.m_lock.unlock();
 
 				CreateIoCompletionPort(reinterpret_cast<HANDLE>(c_socket), h_iocp, p_id, 0);
@@ -491,8 +348,6 @@ void worker()
 
 int main(void)
 {
-	InitWinSock();
-
 	WSADATA WSAData;
 	int ret = WSAStartup(MAKEWORD(2, 2), &WSAData);
 	if(!ret){ }

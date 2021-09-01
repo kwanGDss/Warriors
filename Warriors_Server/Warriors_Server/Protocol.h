@@ -25,6 +25,11 @@ constexpr int TO_SERVER = 0;
 constexpr int TO_CLIENT = 1;
 constexpr int LOGIN_ASK = 2;
 
+constexpr int CLIENT_LOGOUT =			0;
+constexpr int CLIENT_LOGIN =			1;
+constexpr int CLIENT_MOVE =				2;
+constexpr int CLIENT_ATTACK =			3;
+
 constexpr int SERVER_LOGIN_FAIL =		0;
 constexpr int SERVER_LOGIN_OK =			1;
 constexpr int SERVER_PLAYERS_STATUS =	2;
@@ -77,6 +82,13 @@ struct client_packet_reduce_health
 	unsigned char	type;
 	int				id;
 	float			reduce_health;
+};
+
+struct client_packet_attack
+{
+	unsigned char	size;
+	unsigned char	type;
+	int				id;
 };
 
 struct client_packet_logout
