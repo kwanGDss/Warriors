@@ -7,7 +7,7 @@ constexpr int MAX_NAME = 16;
 struct Player
 {
 	char id[16];
-	float HP = 1.f, STAMINA = 1.f;
+	float hp = 1.f, stamina = 1.f;
 	short x_locate, y_locate;
 };
 
@@ -24,6 +24,11 @@ constexpr int NOT_INGAME = -1;
 constexpr int TO_SERVER = 0;
 constexpr int TO_CLIENT = 1;
 constexpr int LOGIN_ASK = 2;
+
+constexpr int SERVER_LOGIN_FAIL =		0;
+constexpr int SERVER_LOGIN_OK =			1;
+constexpr int SERVER_PLAYERS_STATUS =	2;
+constexpr int SERVER_PLAYER_MOVE =		3;
 
 enum class OP_TYPE { OP_RECV = 0, OP_SEND = 1, OP_ACCEPT = 2, OP_DO_MOVE = 3};
 enum class S_STATE { STATE_FREE = 0, STATE_CONNECTED = 1, STATE_INGAME = 2 };
@@ -74,13 +79,19 @@ struct client_packet_reduce_health
 	float			reduce_health;
 };
 
+struct client_packet_logout
+{
+	unsigned char	size;
+	unsigned char	type;
+};
+
 struct server_packet_login
 {
 	unsigned char	size;
 	unsigned char	type;
 	int				id;
 	short			x, y;
-	short			hp, stamina;
+	float			hp, stamina;
 };
 
 struct server_packet_login_ok
@@ -88,9 +99,13 @@ struct server_packet_login_ok
 	unsigned char	size;
 	unsigned char	type;
 	int				id;
-	char			name[MAX_NAME];
-	short			x, y;
-	char			o_type;
+	float			hp, stamina;
+};
+
+struct server_packet_login_fail
+{
+	unsigned char	size;
+	unsigned char	type;
 };
 
 struct server_packet_move
@@ -98,8 +113,7 @@ struct server_packet_move
 	unsigned char	size;
 	unsigned char	type;
 	int				id;
-	short			x, y;
-	int				move_time;
+	int			x, y;
 };
 
 struct server_packet_logout
@@ -117,5 +131,4 @@ struct server_packet_players_status
 	float			stamina;
 	float			health;
 };
-
 #pragma pack (pop)

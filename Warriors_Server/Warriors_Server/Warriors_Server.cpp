@@ -61,180 +61,51 @@ void send_packet_to_server(int p_id, void* buf, char packet_type)
 
 void send_login_ok(int p_id)
 {
-	sc_packet_login_ok packet;
+	server_packet_login_ok packet;
 	packet.size = sizeof(packet);
-	packet.type = SC_LOGIN_OK;
+	packet.type = SERVER_LOGIN_OK;
 	packet.id = p_id;
-	packet.x = players[p_id].m_x;
-	packet.y = players[p_id].m_y;
-	packet.HP = players[p_id].hp;
-	packet.LEVEL = players[p_id].level;
-	packet.EXP = players[p_id].exp;
+	packet.hp = players[p_id].m_hp;
+	packet.stamina = players[p_id].m_stamina;
 
-	send_packet(p_id, &packet, SC_LOGIN_OK);
+	send_packet(p_id, &packet, SERVER_LOGIN_OK);
 }
 
 void send_login_fail(int p_id)
 {
-	sc_packet_login_fail packet;
+	server_packet_login_fail packet;
 	packet.size = sizeof(packet);
-	packet.type = SC_LOGIN_FAIL;
+	packet.type = SERVER_LOGIN_FAIL;
 
-	send_packet(p_id, &packet, SC_LOGIN_FAIL);
+	send_packet(p_id, &packet, SERVER_LOGIN_FAIL);
 }
 
-void send_position(int dest_id, int sour_id)
+void send_players_status(int dest_id, int sour_id)
 {
-	sc_packet_position packet;
+	server_packet_players_status packet;
 	packet.size = sizeof(packet);
-	packet.type = SC_POSITION;
+	packet.type = SERVER_PLAYERS_STATUS;
 	packet.id = sour_id;
-	packet.x = players[sour_id].m_x;
-	packet.y = players[sour_id].m_y;
-	packet.move_time = players[sour_id].last_move_time;
+	packet.stamina = players[dest_id].m_stamina;
+	packet.health = players[dest_id].m_hp;
 
-	send_packet(dest_id, &packet, SC_POSITION);
+	send_packet(dest_id, &packet, SERVER_PLAYERS_STATUS);
 }
 
-void send_position_vp(int dest_id, int sour_id)
+void send_position_change(int p_id)
 {
-	sc_packet_position packet;
+	server_packet_move packet;
 	packet.size = sizeof(packet);
-	packet.type = SC_POSITION;
-	packet.id = sour_id;
-	packet.x = players[sour_id].m_x;
-	packet.y = players[sour_id].m_y;
-	packet.move_time = players[sour_id].last_move_time;
-
-	send_packet_to_server(dest_id, &packet, SC_POSITION);
-}
-
-void send_chat(int p_id)
-{
-	sc_packet_chat packet;
-	packet.size = sizeof(packet);
-	packet.type = SC_CHAT;
+	packet.type = SERVER_PLAYER_MOVE;
 	packet.id = p_id;
-	int bufsize = sizeof(packet.message);
-	memcpy_s(packet.message, bufsize, players[p_id].m_chatbuf, bufsize);
+	packet.x = players[p_id].m_x;
+	packet.y = players[p_id].m_y;
 
-	send_packet(p_id, &packet, SC_CHAT);
-}
-
-void send_stat_change(int p_id)
-{
-	sc_packet_stat_change packet;
-	packet.size = sizeof(packet);
-	packet.type = SC_STAT_CHANGE;
-	packet.id = p_id;
-	packet.HP = players[p_id].hp;
-	packet.LEVEL = players[p_id].level;
-	packet.EXP = players[p_id].exp;
-
-	send_packet(p_id, &packet, SC_STAT_CHANGE);
-}
-
-void send_remove_object(int dest_id, int sour_id)
-{
-	sc_packet_remove_object packet;
-	packet.size = sizeof(packet);
-	packet.type = SC_REMOVE_OBJECT;
-	packet.id = sour_id;
-
-	send_packet_to_server(dest_id, &packet, SC_REMOVE_OBJECT);
-}
-
-void send_add_object(int dest_id, int sour_id, OBJ_TYPE obj)
-{
-	sc_packet_add_object packet;
-
-	packet.size = sizeof(packet);
-	packet.type = SC_ADD_OBJECT;
-	packet.id = sour_id;
-	packet.obj_class = static_cast<int>(obj);
-	packet.x = players[sour_id].m_x;
-	packet.y = players[sour_id].m_y;
-	packet.HP = players[sour_id].hp;
-	packet.LEVEL = players[sour_id].level;
-	packet.EXP = players[sour_id].exp;
-	int bufsize = sizeof(packet.name);
-	memcpy_s(packet.name, bufsize, players[sour_id].m_namebuf, bufsize);
-
-	send_packet_to_server(dest_id, &packet, SC_ADD_OBJECT);
+	send_packet(p_id, &packet, SERVER_PLAYER_MOVE);
 }
 
 void setting_viewport(int p_id)
 {
-	unordered_set<int> old_vl = players[p_id].m_viewlist;
-	unordered_set<int> new_vl;
-
-	for (auto& cl : players)
-	{
-		if (p_id == cl.id) {continue;}
-		if (!can_see(p_id, cl.id)) {continue;}
-		
-		if (is_npc(cl.id)){new_vl.insert(cl.id);}
-		else
-		{
-			cl.m_lock.lock();
-			if (-1 != cl.id) {
-				cl.m_lock.unlock();
-				continue;
-			}
-			else
-			{
-				new_vl.insert(cl.id);
-				cl.m_lock.unlock();
-			}
-		}
-	}
-	for (auto& pl : new_vl)
-	{
-		if (0 == old_vl.count(pl))
-		{
-			if(is_npc(pl)) {send_add_object(p_id, pl, OBJ_TYPE::OBJ_NPC);}
-			else {send_add_object(p_id, pl, OBJ_TYPE::OBJ_PLAYER);}
-
-			if (true == is_npc(pl)){continue;}
-
-			if (0 == players[pl].m_viewlist.count(p_id))
-			{
-				send_add_object(pl, p_id, OBJ_TYPE::OBJ_PLAYER);
-			}
-			else
-			{
-				send_position_vp(pl, p_id);
-			}
-		}
-		else
-		{
-			if (true == is_npc(pl)) { continue; }
-			if (0 == players[pl].m_viewlist.count(p_id))
-			{
-				send_add_object(pl, p_id, OBJ_TYPE::OBJ_PLAYER);
-			}
-			else
-			{
-				send_position_vp(pl, p_id);
-			}
-			send_position_vp(p_id, pl);
-		}
-			
-	}
-	for (auto& pl : old_vl)
-	{
-		if (0 == new_vl.count(pl))
-		{
-			send_remove_object(p_id, pl);
-
-			if (true == is_npc(pl)) { continue; }
-
-			if (0 != players[pl].m_viewlist.count(p_id))
-			{
-				send_remove_object(pl, p_id);
-			}
-		}
-	}
 }
 
 void player_move(int p_id, char dir)
@@ -246,11 +117,11 @@ void player_move(int p_id, char dir)
 		case 0:
 			if (y > 0) y--; break;
 		case 1:
-			if (y < (WORLD_HEIGHT - 1)) y++; break;
+			if (y < (/*WORLD_HEIGHT*/ - 1)) y++; break;
 		case 2:
 			if (x > 0) x--; break;
 		case 3:
-			if (x < WORLD_WIDTH - 1) x++; break;
+			if (x < /*WORLD_WIDTH*/ - 1) x++; break;
 	}
 
 	players[p_id].m_x = x;
@@ -258,9 +129,7 @@ void player_move(int p_id, char dir)
 
 	cout << "( " << x << " , " << y << " ) " << endl;
 
-	send_position(p_id, p_id);
-
-	setting_viewport(p_id);
+	send_position_change(p_id);
 }
 
 void do_recv(int p_id)
@@ -269,61 +138,37 @@ void do_recv(int p_id)
 	SOCKETINFO& r_over = pl.m_recv_over;
 	memset(&r_over.m_over, 0, sizeof(r_over.m_over));
 	r_over.m_wsabuf[0].buf = reinterpret_cast<CHAR*>(r_over.m_buf) + pl.m_prev_recv;
-	r_over.m_wsabuf[0].len = 1024 - pl.m_prev_recv;
+	r_over.m_wsabuf[0].len = 4096 - pl.m_prev_recv;
 	DWORD r_flag = 0;
 
 	WSARecv(pl.m_socket, r_over.m_wsabuf, 1, 0, &r_flag, &r_over.m_over, 0);
 }
 
-void process_packet_login(int p_id, cs_packet_login* packet)
+void process_packet_login(int p_id, client_packet_login* packet)
 {
 	players[p_id].m_lock.lock();
-	strcpy_s(players[p_id].m_namebuf, packet->player_id);
+	strcpy_s(players[p_id].m_name, packet->player_id);
 	players[p_id].m_x = 3;
 	players[p_id].m_y = 3;
 	send_login_ok(p_id);
 	players[p_id].m_lock.unlock();
-
-	for (auto& pl : players)
-	{
-		if (pl.id == p_id) { continue; }
-		if (pl.id <= 0) { continue; }
-		if (can_see(p_id, pl.id))
-		{
-			send_add_object(p_id, pl.id, OBJ_TYPE::OBJ_PLAYER);
-			if(false == is_npc(pl.id))
-			{
-				send_add_object(pl.id, p_id, OBJ_TYPE::OBJ_PLAYER);
-			}
-		}
-	}
 }
 
-void process_packet_move(int p_id, cs_packet_move* packet)
+void process_packet_move(int p_id, client_packet_move* packet)
 {
-	players[p_id].last_move_time = packet->move_time;
-	player_move(p_id, packet->direction);
+	player_move(p_id, packet->dir);
 }
 
-void process_packet_attack(int p_id, cs_packet_attack* packet)
+//void process_packet_attack(int p_id, cs_packet_attack* packet)
 {
 	//
 }
 
-void process_packet_chat(int p_id, cs_packet_chat* packet)
+void process_packet_logout(int p_id, client_packet_logout* packet)
 {
 	//
 }
 
-void process_packet_logout(int p_id, cs_packet_logout* packet)
-{
-	//
-}
-
-void process_packet_teleport(int p_id, cs_packet_teleport* packet)
-{
-	//
-}
 
 int get_new_player_id()
 {

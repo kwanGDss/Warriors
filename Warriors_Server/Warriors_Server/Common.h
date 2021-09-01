@@ -19,8 +19,6 @@ struct SOCKETINFO
 	unsigned char	m_buf[1024];
 };
 
-
-
 struct PLAYERINFO
 {
 	int						id = NOT_INGAME;				// -1 : not ingame / 1 : ingame
@@ -30,7 +28,7 @@ struct PLAYERINFO
 
 	mutex					m_lock;
 	char					m_name[16];
-	short					m_x = rand() % 10, m_y = rand() % 10;
+	int						m_x = rand() % 10, m_y = rand() % 10;
 	float					m_hp = 1.f, m_stamina = 1.f;
 
 	PLAYERINFO& operator = (const PLAYERINFO& Right)
