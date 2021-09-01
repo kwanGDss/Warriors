@@ -3,24 +3,11 @@
 #include <iostream>
 #include <map>
 #include <mutex>
+#include "Protocol.h"
 
 using namespace std;
 
 #define MAX_CLIENTS 100
-
-enum class EPacketType
-{
-	SIGNUP_PLAYER,
-	LOGIN_PLAYER,
-	ENROLL_PLAYER,
-	SEND_PLAYER,
-	RECV_PLAYER,
-	LOGOUT_PLAYER,
-	HIT_PLAYER,
-	DAMAGED_PLAYER,
-	CHAT,
-	ENTER_NEW_PLAYER
-};
 
 // IOCP 소켓 구조체
 struct SOCKETINFO
@@ -32,12 +19,6 @@ struct SOCKETINFO
 	unsigned char	m_buf[1024];
 };
 
-struct Player
-{
-	char id[16];
-	float HP = 1.f, STAMINA = 1.f;
-	short x_locate, y_locate;
-};
 
 
 struct PLAYERINFO

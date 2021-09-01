@@ -19,11 +19,6 @@ int				nThreadCnt		= 0;
 HANDLE			hIOCP;
 int				nResult			= 0;	
 
-
-
-SESSION players[MAX_USER]; // Data Race!
-SOCKET listenSocket;
-
 void disconnect(int p_id);
 void do_recv(int p_id);
 int get_new_player_id();
@@ -62,11 +57,6 @@ void send_packet_to_server(int p_id, void* buf, char packet_type)
 
 	WSASend(players[p_id].m_socket, s_info->m_wsabuf, 1, 0, 0, &s_info->m_over, 0);
 	WSASend(listenSocket, s_info->m_wsabuf, 1, 0, 0, &s_info->m_over, 0);
-}
-
-bool is_npc(int p_id)
-{
-	return p_id < NPC_ID_START;
 }
 
 void send_login_ok(int p_id)
