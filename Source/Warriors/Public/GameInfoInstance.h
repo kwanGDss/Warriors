@@ -55,8 +55,6 @@ struct PLAYERINFO
 	}
 };
 
-void CALLBACK recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags);
-
 UCLASS()
 class WARRIORS_API UGameInfoInstance : public UGameInstance
 {
@@ -105,7 +103,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "RecvPacket")
 	void recv_packet();
 
-	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_packet(void* buf, char packet_type);
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
@@ -122,10 +119,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "MainLoop")
 	void do_play();
-
-	void CALLBACK recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags);
-
-	void CALLBACK send_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags);
 
 	SOCKET serverSocket;
 

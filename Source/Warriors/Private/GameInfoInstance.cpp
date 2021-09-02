@@ -140,7 +140,7 @@ void UGameInfoInstance::send_login_packet()
 	s_info->m_wsabuf[0].buf = reinterpret_cast<char*>(s_info->m_buf);
 	s_info->m_wsabuf[0].len = packet_size;
 
-	WSASend(serverSocket, s_info->m_wsabuf, 1, 0, 0, &s_info->m_over, send_callback);
+	WSASend(serverSocket, s_info->m_wsabuf, 1, 0, 0, &s_info->m_over, 0);
 
 	recv_packet();
 }
@@ -185,12 +185,4 @@ void UGameInfoInstance::do_play()
 		}
 
 	}
-}
-
-void CALLBACK UGameInfoInstance::recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags)
-{
-}
-
-void CALLBACK UGameInfoInstance::send_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags)
-{
 }
