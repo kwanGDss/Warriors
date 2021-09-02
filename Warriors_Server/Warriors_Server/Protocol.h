@@ -1,10 +1,10 @@
 #pragma once
 
-constexpr int MAX_NAME = 10;
+constexpr int MAX_NAME = 16;
 
 #pragma pack (push, 1)
 
-constexpr int MAX_BUFFER = 4096;
+constexpr int MAX_BUFFER = 1024;
 constexpr int SERVER_PORT = 8000;
 constexpr int MAX_USER = 100;
 
@@ -13,19 +13,38 @@ constexpr int BOARD_HEIGHT = 400;
 constexpr int VIEW_DISTANCE = 5;
 constexpr int WIDTH_INDEX = BOARD_WIDTH / VIEW_DISTANCE;
 
-constexpr unsigned char CLIENT_PACKET_LOGIN =		1;
-constexpr unsigned char C2S_PACKET_MOVE =			2;
-constexpr unsigned char S2C_PACKET_LOGIN_INFO =		3;
-constexpr unsigned char SERVER_PACKET_PC_LOGIN =	4;
-constexpr unsigned char S2C_PACKET_PC_MOVE =		5;
-constexpr unsigned char S2C_PACKET_PC_LOGOUT =		6;
-constexpr unsigned char S2S_PACKET_PC_ENTER_VP=		7;
-constexpr unsigned char S2S_PACKET_PC_MOVE_VP =		8;
-constexpr unsigned char S2S_PACKET_PC_OUT_VP =		9;
+constexpr int NOT_INGAME = -1;
+constexpr int TO_SERVER = 0;
+constexpr int TO_CLIENT = 1;
+constexpr int LOGIN_ASK = 2;
+
+constexpr int CLIENT_LOGOUT =			0;
+constexpr int CLIENT_LOGIN =			1;
+constexpr int CLIENT_MOVE =				2;
+constexpr int CLIENT_ATTACK =			3;
+
+constexpr int SERVER_LOGIN_FAIL =		0;
+constexpr int SERVER_LOGIN_OK =			1;
+constexpr int SERVER_PLAYERS_STATUS =	2;
+constexpr int SERVER_PLAYER_MOVE =		3;
 
 enum class OP_TYPE { OP_RECV = 0, OP_SEND = 1, OP_ACCEPT = 2, OP_DO_MOVE = 3};
 enum class S_STATE { STATE_FREE = 0, STATE_CONNECTED = 1, STATE_INGAME = 2 };
 enum class V_STATE { STATE_NEW = 0, STATE_MOVE = 1, STATE_DELETE = 2 };
+
+enum class EPacketType
+{
+	SIGNUP_PLAYER,
+	LOGIN_PLAYER,
+	ENROLL_PLAYER,
+	SEND_PLAYER,
+	RECV_PLAYER,
+	LOGOUT_PLAYER,
+	HIT_PLAYER,
+	DAMAGED_PLAYER,
+	CHAT,
+	ENTER_NEW_PLAYER
+};
 
 struct client_packet_login
 {
@@ -34,12 +53,40 @@ struct client_packet_login
 	char			name[MAX_NAME];
 };
 
-struct c2s_packet_move
+struct client_packet_move
 {
 	unsigned char	size;
 	unsigned char	type;
 	char			dir; // 0 UP 1 RIGHT 2 DOWN 3 LEFT
-	int				move_time;
+};
+
+struct client_packet_reduce_stamina
+{
+	unsigned char	size;
+	unsigned char	type;
+	int				id;
+	float			reduce_stamina;
+};
+
+struct client_packet_reduce_health
+{
+	unsigned char	size;
+	unsigned char	type;
+	int				id;
+	float			reduce_health;
+};
+
+struct client_packet_attack
+{
+	unsigned char	size;
+	unsigned char	type;
+	int				id;
+};
+
+struct client_packet_logout
+{
+	unsigned char	size;
+	unsigned char	type;
 };
 
 struct server_packet_login
@@ -48,56 +95,44 @@ struct server_packet_login
 	unsigned char	type;
 	int				id;
 	short			x, y;
-	short			hp, level;
+	float			hp, stamina;
 };
 
-struct s2c_packet_pc_login
+struct server_packet_login_ok
 {
 	unsigned char	size;
 	unsigned char	type;
 	int				id;
-	char			name[MAX_NAME];
-	short			x, y;
-	char			o_type;
+	float			hp, stamina;
 };
 
-struct s2c_packet_pc_move
+struct server_packet_login_fail
+{
+	unsigned char	size;
+	unsigned char	type;
+};
+
+struct server_packet_move
 {
 	unsigned char	size;
 	unsigned char	type;
 	int				id;
-	short			x, y;
-	int				move_time;
+	int				x, y;
 };
 
-struct s2c_packet_pc_logout
-{
-	unsigned char	size;
-	unsigned char	type;
-	int				id;
-};
-
-struct s2s_packet_pc_enter_vp
-{
-	unsigned char	size;
-	unsigned char	type;
-	int				id;
-};
-
-struct s2s_packet_pc_move_vp
-{
-	unsigned char	size;
-	unsigned char	type;
-	int				id;
-	short			x, y;
-	int				move_time;
-};
-
-struct s2s_packet_pc_out_vp
+struct server_packet_logout
 {
 	unsigned char	size;
 	unsigned char	type;
 	int				id;
 };
 
+struct server_packet_players_status
+{
+	unsigned char	size;
+	unsigned char	type;
+	int				id;
+	float			stamina;
+	float			health;
+};
 #pragma pack (pop)
