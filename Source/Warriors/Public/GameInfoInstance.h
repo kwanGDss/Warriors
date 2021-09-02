@@ -22,23 +22,37 @@ using namespace std;
  */
 
 // IOCP 소켓 구조체
-struct stSOCKETINFO
-{
-	WSAOVERLAPPED	overlapped;
-	WSABUF			dataBuf;
-	SOCKET			socket;
-	char			messageBuffer[MAX_BUFFER];
-	int				recvBytes;
-	int				sendBytes;
-};
-
 struct SOCKETINFO
 {
-	WSAOVERLAPPED	overlapped;
-	WSABUF			wsabuf[1];
-	unsigned char	messagebuf[MAX_BUFFER];
-	EPacketType		packettype;
-	SOCKET			client_socket;
+	WSAOVERLAPPED	m_over;
+	WSABUF			m_wsabuf[1];
+	char			m_packet_type[2];
+	SOCKET			m_clientsocket;
+	unsigned char	m_buf[1024];
+};
+
+struct PLAYERINFO
+{
+	int						id = NOT_INGAME;				// -1 : not ingame / 1 : ingame
+	unsigned char			m_prev_recv = 0;
+	SOCKETINFO				m_recv_over;
+	SOCKET					m_socket = -1;			// -1 : not connect / 1~ : connect 
+
+	mutex					m_lock;
+	char					m_name[16];
+	int						m_x = rand() % 10, m_y = rand() % 10;
+	float					m_hp = 1.f, m_stamina = 1.f;
+
+	PLAYERINFO& operator = (const PLAYERINFO& Right)
+	{
+		m_x = Right.m_x;
+		m_y = Right.m_y;
+		m_hp = Right.m_hp;
+		m_stamina = Right.m_stamina;
+		strcpy_s(m_name, Right.m_name);
+
+		return *this;
+	}
 };
 
 void CALLBACK recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags);
@@ -53,45 +67,70 @@ public:
 	UGameInfoInstance();
 	~UGameInfoInstance();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "ServerInfo")
 	FString IPAddress;
 
 	// 체력
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
-	float HealthValue;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "CharacterInfo")
+	float HealthValue = 1.f;
 
 	// 에너지
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
-	float EnergyValue;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "CharacterInfo")
+	float EnergyValue = 1.f;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerInfo")
 	FString PlayerName;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "CharacterInfo")
 	float Player_x;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "CharacterInfo")
 	float Player_y;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "CharacterInfo")
 	float Player_z;
 
-	UFUNCTION(BlueprintCallable, Category = "Properties")
-	void Send_Login_Packet();
+	UFUNCTION(BlueprintCallable, Category = "ProcessPacket")
+	void process_login_packet();
 
-	UFUNCTION(BlueprintCallable, Category = "Properties")
-	void Send_Packet();
+	UFUNCTION(BlueprintCallable, Category = "ProcessPacket")
+	void process_update_status();
 
-	UFUNCTION(BlueprintCallable, Category = "Properties")
-	float Reduce_Energy(float UseEnergy);
+	UFUNCTION(BlueprintCallable, Category = "ProcessPacket")
+	void process_update_position();
 
-	UFUNCTION(BlueprintCallable, Category = "Properties")
-	float Reduce_Health(float GetDamaged);
+	UFUNCTION(BlueprintCallable, Category = "ProcessPacket")
+	void process_packet();
+
+	UFUNCTION(BlueprintCallable, Category = "RecvPacket")
+	void recv_packet();
+
+	UFUNCTION(BlueprintCallable, Category = "SendPacket")
+	void send_packet(void* buf, char packet_type);
+
+	UFUNCTION(BlueprintCallable, Category = "SendPacket")
+	void send_login_packet();
+
+	UFUNCTION(BlueprintCallable, Category = "SendPacket")
+	void send_move_packet();
+
+	UFUNCTION(BlueprintCallable, Category = "SendPacket")
+	void send_attack_packet();
+
+	UFUNCTION(BlueprintCallable, Category = "SendPacket")
+	void send_logout_packet();
+
+	UFUNCTION(BlueprintCallable, Category = "MainLoop")
+	void do_play();
+
+	void CALLBACK recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags);
+
+	void CALLBACK send_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags);
 
 	SOCKET serverSocket;
 
-	WSABUF s_wsabuf[1];
-	WSABUF r_wsabuf[1];
+	SOCKETINFO s_wsabuf;
+	SOCKETINFO r_wsabuf;
 
-	SOCKETINFO* s_over = new SOCKETINFO;
+	PLAYERINFO* player = new PLAYERINFO;
 };
