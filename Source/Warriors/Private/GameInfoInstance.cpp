@@ -28,6 +28,21 @@ float UGameInfoInstance::reduce_health(float reduce_amount)
 	return player->m_hp;
 }
 
+float UGameInfoInstance::get_my_stamina()
+{
+	return player->m_stamina;
+}
+
+void UGameInfoInstance::set_my_stamina(float increase_amount)
+{
+	player->m_stamina += increase_amount;
+}
+
+float UGameInfoInstance::get_my_health()
+{
+	return player->m_hp;
+}
+
 void UGameInfoInstance::initSocket()
 {
 	char* Server_IP = TCHAR_TO_ANSI(*IPAddress);

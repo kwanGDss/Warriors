@@ -250,12 +250,7 @@ int main(void)
 	
 	DWORD r_flag = 0;
 
-	//send_login_packet();
-
-	thread play_thread {do_play};
-	play_thread.join();
-
-	while (true) SleepEx(100, true);
+	send_login_packet();
 
 	closesocket(serverSocket);
 	WSACleanup();

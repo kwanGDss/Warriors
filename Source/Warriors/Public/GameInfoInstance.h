@@ -97,6 +97,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
 	float reduce_health(float reduce_amount);
 
+	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
+	float get_my_stamina();
+
+	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
+	void set_my_stamina(float increase_amount);
+
+	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
+	float get_my_health();
+
 	UFUNCTION(BlueprintCallable, Category = "ProcessSocket")
 	void initSocket();
 
