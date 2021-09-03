@@ -248,11 +248,6 @@ void disconnect(int p_id)
 	players[p_id].m_lock.unlock();
 }
 
-void earn_exp(int p_id, int exp)
-{
-	PLAYERINFO &player = players[p_id];
-}
-
 void go_start_location(int p_id)
 {
 	//
@@ -329,7 +324,7 @@ void worker()
 				do_recv(key);
 				break;
 			}
-			case TO_CLIENT:
+		case TO_CLIENT:
 			{
 				if (num_byte != ex_over->m_wsabuf[0].len) {disconnect(key);}
 				switch(pack->type)
@@ -339,7 +334,7 @@ void worker()
 				delete ex_over;
 				break;
 			}
-			case LOGIN_ASK:
+		case LOGIN_ASK:
 			{
 				SOCKET c_socket = ex_over->m_clientsocket;
 				int p_id = get_new_player_id();
@@ -365,7 +360,7 @@ void worker()
 
 				CreateIoCompletionPort(reinterpret_cast<HANDLE>(c_socket), h_iocp, p_id, 0);
 
-				do_recv(p_id);
+				//do_recv(p_id);
 				do_accept(listenSocket, ex_over);
 	
 				cout << "New Client [" << p_id << "] !" << endl;

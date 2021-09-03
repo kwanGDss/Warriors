@@ -7,21 +7,42 @@
 
 UGameInfoInstance::UGameInfoInstance()
 {
-    char* Server_IP = TCHAR_TO_ANSI(*IPAddress);
 
-	HealthValue = 1.f;
-	EnergyValue = 1.f;
+}
 
-	s_wsabuf.m_wsabuf[0].buf = Server_IP;
+UGameInfoInstance::~UGameInfoInstance()
+{
+	closesocket(serverSocket);
+	WSACleanup();
+}
+
+float UGameInfoInstance::reduce_stamina(float reduce_amount)
+{
+	player->m_stamina -= reduce_amount;
+	return player->m_stamina;
+}
+
+float UGameInfoInstance::reduce_health(float reduce_amount)
+{
+	player->m_hp -= reduce_amount;
+	return player->m_hp;
+}
+
+void UGameInfoInstance::initSocket()
+{
+	s_wsabuf.m_wsabuf[0].buf = "BBaKKi";
 	s_wsabuf.m_wsabuf[0].len = 1;
-
-	char* server_IP = const_cast<char*>("127.0.0.1");
 
 	WSADATA WSAData;
 	if (WSAStartup(MAKEWORD(2, 2), &WSAData) != 0) printf_s("Can't Start WSA");
 
 	serverSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+}
 
+void UGameInfoInstance::connectSocket()
+{
+	char* Server_IP = TCHAR_TO_ANSI(*IPAddress);
+	char* server_IP = const_cast<char*>("127.0.0.1");
 	SOCKADDR_IN serverAddr;
 	memset(&serverAddr, 0, sizeof(SOCKADDR_IN));
 	serverAddr.sin_family = AF_INET;
@@ -32,14 +53,7 @@ UGameInfoInstance::UGameInfoInstance()
 
 	DWORD r_flag = 0;
 
-	send_login_packet(); //Move to Main Menu Access
-
-}
-
-UGameInfoInstance::~UGameInfoInstance()
-{
-	closesocket(serverSocket);
-	WSACleanup();
+	//send_login_packet(); //Move to Main Menu Access
 }
 
 void UGameInfoInstance::process_login_packet()
