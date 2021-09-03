@@ -22,6 +22,12 @@ float UGameInfoInstance::reduce_stamina(float reduce_amount)
 	return player->m_stamina;
 }
 
+float UGameInfoInstance::increase_stamina(float increase_amount)
+{
+	player->m_stamina += increase_amount;
+	return player->m_stamina;
+}
+
 float UGameInfoInstance::reduce_health(float reduce_amount)
 {
 	player->m_hp -= reduce_amount;
@@ -41,6 +47,11 @@ void UGameInfoInstance::set_my_stamina(float increase_amount)
 float UGameInfoInstance::get_my_health()
 {
 	return player->m_hp;
+}
+
+float UGameInfoInstance::get_enemy_health()
+{
+	return enemy->m_hp;
 }
 
 void UGameInfoInstance::initSocket()
