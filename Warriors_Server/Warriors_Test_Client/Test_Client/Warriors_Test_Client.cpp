@@ -172,19 +172,7 @@ void send_login_packet()
 	packet.type = CLIENT_LOGIN;
 	strcpy_s(packet.name, "BBaKKi");
 
-	SOCKETINFO* s_info = new SOCKETINFO;
-
-	unsigned char packet_size = reinterpret_cast<unsigned char*>(&packet)[0];
-	s_info->m_packet_type[0] = TO_SERVER;
-	s_info->m_packet_type[1] = CLIENT_LOGIN;
-	memset(&s_info->m_over, 0, sizeof(s_info->m_over));
-	memcpy(s_info->m_buf, &packet, packet_size);
-	s_info->m_wsabuf[0].buf = reinterpret_cast<char*>(s_info->m_buf);
-	s_info->m_wsabuf[0].len = packet_size;
-
-	WSASend(serverSocket, s_info->m_wsabuf, 1, 0, 0, &s_info->m_over, send_callback);
-
-	recv_packet();
+	send_packet(&packet, CLIENT_LOGIN);
 }
 
 void send_move_packet()

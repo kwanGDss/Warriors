@@ -7,7 +7,7 @@
 
 UGameInfoInstance::UGameInfoInstance()
 {
-
+	
 }
 
 UGameInfoInstance::~UGameInfoInstance()
@@ -30,13 +30,27 @@ float UGameInfoInstance::reduce_health(float reduce_amount)
 
 void UGameInfoInstance::initSocket()
 {
-	s_wsabuf.m_wsabuf[0].buf = "BBaKKi";
-	s_wsabuf.m_wsabuf[0].len = 1;
+	char* Server_IP = TCHAR_TO_ANSI(*IPAddress);
+
+	//s_wsabuf.m_wsabuf[0].buf = Server_IP;
+	//s_wsabuf.m_wsabuf[0].len = 1;
+
+	char* server_IP = const_cast<char*>("127.0.0.1");
 
 	WSADATA WSAData;
 	if (WSAStartup(MAKEWORD(2, 2), &WSAData) != 0) printf_s("Can't Start WSA");
 
 	serverSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+
+	/*SOCKADDR_IN serverAddr;
+	memset(&serverAddr, 0, sizeof(SOCKADDR_IN));
+	serverAddr.sin_family = AF_INET;
+	serverAddr.sin_port = htons(SERVER_PORT);
+	inet_pton(AF_INET, server_IP, &serverAddr.sin_addr);
+
+	WSAConnect(serverSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr), NULL, NULL, 0, 0);
+
+	send_login_packet(); //Move to Main Menu Access*/
 }
 
 void UGameInfoInstance::connectSocket()
@@ -53,7 +67,7 @@ void UGameInfoInstance::connectSocket()
 
 	DWORD r_flag = 0;
 
-	//send_login_packet(); //Move to Main Menu Access
+	send_login_packet(); //Move to Main Menu Access
 }
 
 void UGameInfoInstance::process_login_packet()
@@ -144,19 +158,7 @@ void UGameInfoInstance::send_login_packet()
 	packet.type = CLIENT_LOGIN;
 	strcpy_s(packet.name, "BBaKKi");
 
-	SOCKETINFO* s_info = new SOCKETINFO;
-
-	unsigned char packet_size = reinterpret_cast<unsigned char*>(&packet)[0];
-	s_info->m_packet_type[0] = TO_SERVER;
-	s_info->m_packet_type[1] = CLIENT_LOGIN;
-	memset(&s_info->m_over, 0, sizeof(s_info->m_over));
-	memcpy(s_info->m_buf, &packet, packet_size);
-	s_info->m_wsabuf[0].buf = reinterpret_cast<char*>(s_info->m_buf);
-	s_info->m_wsabuf[0].len = packet_size;
-
-	WSASend(serverSocket, s_info->m_wsabuf, 1, 0, 0, &s_info->m_over, 0);
-
-	recv_packet();
+	send_packet(&packet, CLIENT_LOGIN);
 }
 
 void UGameInfoInstance::send_move_packet()

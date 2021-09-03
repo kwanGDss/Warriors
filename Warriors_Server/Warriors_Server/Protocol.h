@@ -16,7 +16,8 @@ constexpr int WIDTH_INDEX = BOARD_WIDTH / VIEW_DISTANCE;
 constexpr int NOT_INGAME = -1;
 constexpr int TO_SERVER = 0;
 constexpr int TO_CLIENT = 1;
-constexpr int LOGIN_ASK = 2;
+constexpr int CLIENT_LOGIN_ASK = 2;
+constexpr int SERVER_LOGIN_ASK = 3;
 
 constexpr int CLIENT_LOGOUT =			0;
 constexpr int CLIENT_LOGIN =			1;
