@@ -257,15 +257,6 @@ void AWarriorsCharacter::Tick(float DeltaTime)
 //}
 //
 //
-void AWarriorsCharacter::UpdateHealth(float HealthChange)
-{
-	HealthValue += HealthChange;
-}
-
-float AWarriorsCharacter::GetHealth()
-{
-	return HealthValue;
-}
 //
 //void AWarriorsCharacter::OnResetVR()
 //{

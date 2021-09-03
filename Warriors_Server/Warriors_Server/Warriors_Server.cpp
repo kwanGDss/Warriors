@@ -397,21 +397,7 @@ int main(void)
 
 	SOCKETINFO socketinfo;
 	socketinfo.m_packet_type[0] = LOGIN_ASK;
-
-	SOCKET c_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-	memset(&socketinfo.m_over, 0, sizeof(socketinfo.m_over));
-	DWORD num_byte;
-	int addr_size = sizeof(SOCKADDR_IN) + 16;
-	socketinfo.m_clientsocket = c_socket;
-	BOOL result = AcceptEx(listenSocket, c_socket, socketinfo.m_buf, 0, addr_size, addr_size, &num_byte, &socketinfo.m_over);
-	if (FALSE == result)
-	{
-		if (WSA_IO_PENDING != WSAGetLastError())
-		{
-			cout << "Accept error" << endl;
-			exit(-1);
-		}
-	}
+	do_accept(listenSocket, &socketinfo);
 
 	cout << "Server Start!" << endl;
 

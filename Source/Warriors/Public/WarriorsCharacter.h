@@ -38,18 +38,6 @@ public:
 	///** Returns FollowCamera subobject **/
 	//FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
-	// 체력
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
-	float HealthValue;
-
-	// 에너지
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
-	float EnergyValue;
-
-	// 기분
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
-	float MoodValue;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
 	bool bIsDamaged;
 
@@ -73,14 +61,6 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
 	bool bIsDead;
-	
-	// 체력 업데이트
-	UFUNCTION(BlueprintCallable, Category = "Properties")
-	void UpdateHealth(float HealthChange);
-
-	// 체력 가져오기
-	UFUNCTION(BlueprintPure, Category = "Properties")
-	float GetHealth();
 
 protected:
 	///** Resets HMD orientation in VR. */
