@@ -61,7 +61,7 @@ void UGameInfoInstance::connectSocket()
 	memset(&serverAddr, 0, sizeof(SOCKADDR_IN));
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(SERVER_PORT);
-	inet_pton(AF_INET, server_IP, &serverAddr.sin_addr);
+	inet_pton(AF_INET, Server_IP, &serverAddr.sin_addr);
 
 	WSAConnect(serverSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr), NULL, NULL, 0, 0);
 
