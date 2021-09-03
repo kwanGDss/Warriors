@@ -1,1 +1,2 @@
 D:\UE_4.26\Warriors\Warriors_Server\Warriors_Server\Debug\Warriors_Server.exe
+C:\M_S\Warriors\Warriors_Server\Warriors_Server\Debug\Warriors_Server.exe

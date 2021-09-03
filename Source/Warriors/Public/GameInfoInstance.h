@@ -88,6 +88,18 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "CharacterInfo")
 	float Player_z;
 
+	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
+	float reduce_stamina(float reduce_amount);
+
+	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
+	float reduce_health(float reduce_amount);
+
+	UFUNCTION(BlueprintCallable, Category = "ProcessSocket")
+	void initSocket();
+
+	UFUNCTION(BlueprintCallable, Category = "ProcessSocket")
+	void connectSocket();
+
 	UFUNCTION(BlueprintCallable, Category = "ProcessPacket")
 	void process_login_packet();
 
@@ -126,4 +138,5 @@ public:
 	SOCKETINFO r_wsabuf;
 
 	PLAYERINFO* player = new PLAYERINFO;
+	PLAYERINFO* enemy = new PLAYERINFO;
 };
