@@ -71,26 +71,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "ServerInfo")
 	FString Player_Name;
 
-	// 체력
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "CharacterInfo")
-	float HealthValue = 1.f;
-
-	// 에너지
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "CharacterInfo")
-	float EnergyValue = 1.f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PlayerInfo")
-	FString PlayerName;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "CharacterInfo")
-	float Player_x;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "CharacterInfo")
-	float Player_y;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "CharacterInfo")
-	float Player_z;
-
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
 	float reduce_stamina(float reduce_amount);
 
