@@ -250,7 +250,7 @@ int main(void)
 	
 	DWORD r_flag = 0;
 
-	send_login_packet();
+	//send_login_packet();
 
 	thread play_thread {do_play};
 	play_thread.join();
