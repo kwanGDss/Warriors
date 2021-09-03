@@ -186,6 +186,7 @@ void process_packet_login(int p_id, client_packet_login* packet)
 	players[p_id].m_y = 3;
 	send_login_ok(p_id);
 	players[p_id].m_lock.unlock();
+	cout << players[p_id].m_name << " Player Connect Success!" << endl;
 }
 
 void process_packet_move(int p_id, client_packet_move* packet)
@@ -334,7 +335,7 @@ void worker()
 				delete ex_over;
 				break;
 			}
-		case LOGIN_ASK:
+		case CLIENT_LOGIN_ASK:
 			{
 				SOCKET c_socket = ex_over->m_clientsocket;
 				int p_id = get_new_player_id();
@@ -360,7 +361,7 @@ void worker()
 
 				CreateIoCompletionPort(reinterpret_cast<HANDLE>(c_socket), h_iocp, p_id, 0);
 
-				//do_recv(p_id);
+				do_recv(p_id);
 				do_accept(listenSocket, ex_over);
 	
 				cout << "New Client [" << p_id << "] !" << endl;
@@ -396,7 +397,7 @@ int main(void)
 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(listenSocket), h_iocp, (DWORD)100000, 0);
 
 	SOCKETINFO socketinfo;
-	socketinfo.m_packet_type[0] = LOGIN_ASK;
+	socketinfo.m_packet_type[0] = CLIENT_LOGIN_ASK;
 	do_accept(listenSocket, &socketinfo);
 
 	cout << "Server Start!" << endl;
