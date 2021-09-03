@@ -7,7 +7,6 @@
 
 UGameInfoInstance::UGameInfoInstance()
 {
-	
 }
 
 UGameInfoInstance::~UGameInfoInstance()
@@ -58,25 +57,12 @@ void UGameInfoInstance::initSocket()
 {
 	char* Server_IP = TCHAR_TO_ANSI(*IPAddress);
 
-	//s_wsabuf.m_wsabuf[0].buf = Server_IP;
-	//s_wsabuf.m_wsabuf[0].len = 1;
-
 	char* server_IP = const_cast<char*>("127.0.0.1");
 
 	WSADATA WSAData;
 	if (WSAStartup(MAKEWORD(2, 2), &WSAData) != 0) printf_s("Can't Start WSA");
 
 	serverSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-
-	/*SOCKADDR_IN serverAddr;
-	memset(&serverAddr, 0, sizeof(SOCKADDR_IN));
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(SERVER_PORT);
-	inet_pton(AF_INET, server_IP, &serverAddr.sin_addr);
-
-	WSAConnect(serverSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr), NULL, NULL, 0, 0);
-
-	send_login_packet(); //Move to Main Menu Access*/
 }
 
 void UGameInfoInstance::connectSocket()
