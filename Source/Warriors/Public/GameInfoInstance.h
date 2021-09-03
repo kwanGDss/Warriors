@@ -68,6 +68,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "ServerInfo")
 	FString IPAddress;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "ServerInfo")
+	FString Player_Name;
+
 	// Ã¼·Â
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "CharacterInfo")
 	float HealthValue = 1.f;

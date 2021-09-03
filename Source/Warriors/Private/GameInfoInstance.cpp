@@ -64,10 +64,6 @@ void UGameInfoInstance::connectSocket()
 	inet_pton(AF_INET, Server_IP, &serverAddr.sin_addr);
 
 	WSAConnect(serverSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr), NULL, NULL, 0, 0);
-
-	DWORD r_flag = 0;
-
-	send_login_packet(); //Move to Main Menu Access
 }
 
 void UGameInfoInstance::process_login_packet()
@@ -152,11 +148,12 @@ void UGameInfoInstance::send_packet(void* buf, char packet_type)
 
 void UGameInfoInstance::send_login_packet()
 {
+	char* playername = TCHAR_TO_ANSI(*Player_Name);
 	client_packet_login packet;
 
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_LOGIN;
-	strcpy_s(packet.name, "BBaKKi");
+	strcpy_s(packet.name, playername);
 
 	send_packet(&packet, CLIENT_LOGIN);
 }
