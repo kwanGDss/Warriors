@@ -22,13 +22,14 @@ constexpr int SERVER_LOGIN_ASK = 3;
 constexpr int CLIENT_LOGOUT =			0;
 constexpr int CLIENT_LOGIN =			1;
 constexpr int CLIENT_REDUCE_STAMINA =	2;
-constexpr int CLIENT_MOVE =				3;
-constexpr int CLIENT_ATTACK =			4;
+constexpr int CLIENT_ATTACK =			3;
+constexpr int CLIENT_MOVE =				4;
 
 constexpr int SERVER_LOGIN_FAIL =		0;
 constexpr int SERVER_LOGIN_OK =			1;
 constexpr int SERVER_PLAYER_STATUS =	2;
-constexpr int SERVER_PLAYER_MOVE =		3;
+constexpr int SERVER_ENEMY_STATUS =		3;
+constexpr int SERVER_PLAYER_MOVE =		4;
 
 enum class OP_TYPE { OP_RECV = 0, OP_SEND = 1, OP_ACCEPT = 2, OP_DO_MOVE = 3};
 enum class S_STATE { STATE_FREE = 0, STATE_CONNECTED = 1, STATE_INGAME = 2 };
@@ -76,13 +77,6 @@ struct client_packet_reduce_health
 	unsigned char	type;
 	int				id;
 	float			reduce_health;
-};
-
-struct client_packet_attack
-{
-	unsigned char	size;
-	unsigned char	type;
-	int				id;
 };
 
 struct client_packet_logout
@@ -142,8 +136,7 @@ struct server_packet_enemy_status
 {
 	unsigned char	size;
 	unsigned char	type;
-	int				id;
-	float			stamina;
+	int				enemy_id;
 	float			health;
 };
 #pragma pack (pop)

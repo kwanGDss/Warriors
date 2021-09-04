@@ -17,20 +17,23 @@ UGameInfoInstance::~UGameInfoInstance()
 
 float UGameInfoInstance::reduce_stamina(float reduce_amount)
 {
-	player->m_stamina -= reduce_amount;
+	//player->m_stamina -= reduce_amount;
 	send_stamina_packet(reduce_amount);
 	return player->m_stamina;
 }
 
 float UGameInfoInstance::increase_stamina(float increase_amount)
 {
-	player->m_stamina += increase_amount;
+	//player->m_stamina += increase_amount;
+	float reduce_amount = -increase_amount;
+	send_stamina_packet(reduce_amount);
 	return player->m_stamina;
 }
 
 float UGameInfoInstance::reduce_health(float reduce_amount)
 {
 	player->m_hp -= reduce_amount;
+	send_attack_packet(reduce_amount);
 	return player->m_hp;
 }
 
@@ -41,7 +44,9 @@ float UGameInfoInstance::get_my_stamina()
 
 void UGameInfoInstance::set_my_stamina(float increase_amount)
 {
-	player->m_stamina += increase_amount;
+	//player->m_stamina += increase_amount;
+	float reduce_amount = -increase_amount;
+	send_stamina_packet(reduce_amount);
 }
 
 float UGameInfoInstance::get_my_health()
@@ -96,6 +101,12 @@ void UGameInfoInstance::process_update_status()
 	player->m_hp = packet->health;
 }
 
+void UGameInfoInstance::process_update_enemy_status()
+{
+	server_packet_enemy_status* packet = reinterpret_cast<server_packet_enemy_status*>(r_wsabuf.m_wsabuf[0].buf);
+	enemy->m_hp = packet->health;
+}
+
 void UGameInfoInstance::process_update_position()
 {
 	server_packet_move* packet = reinterpret_cast<server_packet_move*>(r_wsabuf.m_wsabuf[0].buf);
@@ -112,18 +123,17 @@ void UGameInfoInstance::process_packet()
 	switch (ex_over->type)
 	{
 	case SERVER_LOGIN_OK:
-		cout << "LOGIN_OK" << endl;
 		process_login_packet();
 		break;
 	case SERVER_LOGIN_FAIL:
-		cout << "LOGIN_FAIL" << endl;
 		break;
 	case SERVER_PLAYER_STATUS:
-		cout << "UPDATE_STATUS" << endl;
 		process_update_status();
 		break;
+	case SERVER_ENEMY_STATUS:
+		process_update_enemy_status();
+		break;
 	case SERVER_PLAYER_MOVE:
-		cout << "UPDATE_POSITION" << endl;
 		process_update_position();
 		break;
 
@@ -193,11 +203,13 @@ void UGameInfoInstance::send_move_packet()
 	send_packet(&packet, CLIENT_MOVE);
 }
 
-void UGameInfoInstance::send_attack_packet()
+void UGameInfoInstance::send_attack_packet(float reduce_amount)
 {
-	client_packet_attack packet;
+	client_packet_reduce_health packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_ATTACK;
+	packet.id = player->id;
+	packet.reduce_health = reduce_amount;
 
 	send_packet(&packet, CLIENT_ATTACK);
 }

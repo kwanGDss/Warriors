@@ -34,6 +34,7 @@ struct SOCKETINFO
 struct PLAYERINFO
 {
 	int						id = NOT_INGAME;				// -1 : not ingame / 1 : ingame
+	int						enemy_id = NOT_INGAME;
 	unsigned char			m_prev_recv = 0;
 	SOCKETINFO				m_recv_over;
 	SOCKET					m_socket = -1;			// -1 : not connect / 1~ : connect 
@@ -98,19 +99,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ProcessSocket")
 	void connectSocket();
 
-	UFUNCTION(BlueprintCallable, Category = "ProcessPacket")
 	void process_login_packet();
 
-	UFUNCTION(BlueprintCallable, Category = "ProcessPacket")
 	void process_update_status();
 
-	UFUNCTION(BlueprintCallable, Category = "ProcessPacket")
+	void process_update_enemy_status();
+
 	void process_update_position();
 
-	UFUNCTION(BlueprintCallable, Category = "ProcessPacket")
 	void process_packet();
 
-	UFUNCTION(BlueprintCallable, Category = "RecvPacket")
 	void recv_packet();
 
 	void send_packet(void* buf, char packet_type);
@@ -125,7 +123,7 @@ public:
 	void send_move_packet();
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
-	void send_attack_packet();
+	void send_attack_packet(float reduce_amount);
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_logout_packet();

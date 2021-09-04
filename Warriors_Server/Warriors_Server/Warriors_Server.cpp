@@ -32,6 +32,7 @@ struct SOCKETINFO
 struct PLAYERINFO
 {
 	int						id = NOT_INGAME;				// -1 : not ingame / 1 : ingame
+	int						enemy_id = NOT_INGAME;
 	unsigned char			m_prev_recv = 0;
 	SOCKETINFO				m_recv_over;
 	SOCKET					m_socket = -1;			// -1 : not connect / 1~ : connect 
@@ -126,16 +127,15 @@ void send_update_stamina(int p_id)
 	send_packet(p_id, &packet, SERVER_PLAYER_STATUS);
 }
 
-void send_players_status(int dest_id, int sour_id)
+void send_enemy_status(int dest_id, int sour_id)
 {
-	/*server_packet_players_status packet;
+	server_packet_enemy_status packet;
 	packet.size = sizeof(packet);
-	packet.type = SERVER_PLAYERS_STATUS;
-	packet.id = sour_id;
-	packet.stamina = players[dest_id].m_stamina;
-	packet.health = players[dest_id].m_hp;
+	packet.type = SERVER_ENEMY_STATUS;
+	packet.enemy_id = sour_id;
+	packet.health = players[sour_id].m_hp;
 
-	send_packet(dest_id, &packet, SERVER_PLAYERS_STATUS);*/
+	send_packet(dest_id, &packet, SERVER_ENEMY_STATUS);
 }
 
 void send_position_change(int p_id)
@@ -215,14 +215,17 @@ void process_packet_move(int p_id, client_packet_move* packet)
 	player_move(p_id, packet->dir);
 }
 
-void process_packet_attack(int p_id, client_packet_attack* packet)
+void process_packet_attack(int p_id, client_packet_reduce_health* packet)
 {
-	//
+	int enemy = players[p_id].enemy_id;
+	players[enemy].m_hp -= packet->reduce_health;
+	send_enemy_status(p_id, enemy);
 }
 
 void process_packet_logout(int p_id, client_packet_logout* packet)
 {
-	//
+	printf_s("%d Client Leave from Server\n", p_id);
+	disconnect(p_id);
 }
 
 
@@ -263,11 +266,10 @@ void do_accept(SOCKET s_socket, SOCKETINFO* a_over)
 
 void disconnect(int p_id)
 {
-	
-	players[p_id].m_lock.lock();
+	//players[p_id].m_lock.lock();
 	players[p_id].id = NOT_INGAME;
 	closesocket(players[p_id].m_socket);
-	players[p_id].m_lock.unlock();
+	//players[p_id].m_lock.unlock();
 }
 
 void go_start_location(int p_id)
@@ -333,7 +335,7 @@ void worker()
 						}
 					case CLIENT_ATTACK:
 						{
-							//process_packet_attack(key, reinterpret_cast<cs_packet_attack*>(ps));
+							process_packet_attack(key, reinterpret_cast<client_packet_reduce_health*>(ps));
 							break;
 						}	
 					case CLIENT_LOGOUT:
