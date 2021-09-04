@@ -94,24 +94,18 @@ void UGameInfoInstance::process_login_packet()
 	player->enemy_id = packet->enemy_id;
 }
 
-void UGameInfoInstance::process_update_status()
+void UGameInfoInstance::process_tick()
 {
-	server_packet_player_status* packet = reinterpret_cast<server_packet_player_status*>(r_wsabuf.m_wsabuf[0].buf);
-	player->m_stamina = packet->stamina;
-	player->m_hp = packet->health;
-}
+	server_packet_tick* packet = reinterpret_cast<server_packet_tick*>(r_wsabuf.m_wsabuf[0].buf);
 
-void UGameInfoInstance::process_update_enemy_status()
-{
-	server_packet_enemy_status* packet = reinterpret_cast<server_packet_enemy_status*>(r_wsabuf.m_wsabuf[0].buf);
-	enemy->m_hp = packet->health;
-}
+	player->m_x = packet->player_x;
+	player->m_y = packet->player_y;
+	player->m_hp = packet->player_hp;
+	player->m_stamina = packet->player_stamina;
 
-void UGameInfoInstance::process_update_position()
-{
-	server_packet_move* packet = reinterpret_cast<server_packet_move*>(r_wsabuf.m_wsabuf[0].buf);
-	player->m_x = packet->x;
-	player->m_y = packet->y;
+	enemy->m_x = packet->enemy_x;
+	enemy->m_y = packet->enemy_y;
+	enemy->m_hp = packet->enemy_hp;
 }
 
 void UGameInfoInstance::process_packet()
@@ -127,16 +121,9 @@ void UGameInfoInstance::process_packet()
 		break;
 	case SERVER_LOGIN_FAIL:
 		break;
-	case SERVER_PLAYER_STATUS:
-		process_update_status();
+	case SERVER_TICK:
+		process_tick();
 		break;
-	case SERVER_ENEMY_STATUS:
-		process_update_enemy_status();
-		break;
-	case SERVER_PLAYER_MOVE:
-		process_update_position();
-		break;
-
 	}
 }
 
@@ -238,18 +225,4 @@ void UGameInfoInstance::send_logout_packet()
 	packet.type = CLIENT_LOGOUT;
 
 	send_packet_not_recv(&packet, CLIENT_LOGOUT);
-}
-
-void UGameInfoInstance::do_play()
-{
-	int i = 0;
-	while (true)
-	{
-		if (!i)
-		{
-			send_move_packet();
-			i++;
-		}
-
-	}
 }

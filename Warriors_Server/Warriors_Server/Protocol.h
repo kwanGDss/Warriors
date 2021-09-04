@@ -24,7 +24,7 @@ constexpr int SERVER_LOGIN_FAIL =		0;
 constexpr int SERVER_LOGIN_OK =			1;
 constexpr int SERVER_PLAYER_STATUS =	2;
 constexpr int SERVER_ENEMY_STATUS =		3;
-constexpr int SERVER_PLAYER_MOVE =		4;
+constexpr int SERVER_TICK =				4;
 
 enum class OP_TYPE { OP_RECV = 0, OP_SEND = 1, OP_ACCEPT = 2, OP_DO_MOVE = 3};
 enum class S_STATE { STATE_FREE = 0, STATE_CONNECTED = 1, STATE_INGAME = 2 };
@@ -133,6 +133,12 @@ struct server_packet_tick
 {
 	unsigned char	size;
 	unsigned char	type;
-
+	int				player_x;
+	int				player_y;
+	float			player_hp;
+	float			player_stamina;
+	int				enemy_x;
+	int				enemy_y;
+	float			enemy_hp;
 };
 #pragma pack (pop)

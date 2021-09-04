@@ -101,11 +101,7 @@ public:
 
 	void process_login_packet();
 
-	void process_update_status();
-
-	void process_update_enemy_status();
-
-	void process_update_position();
+	void process_tick();
 
 	void process_packet();
 
@@ -129,9 +125,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_logout_packet();
-
-	UFUNCTION(BlueprintCallable, Category = "MainLoop")
-	void do_play();
 
 	SOCKET serverSocket;
 
