@@ -113,6 +113,8 @@ public:
 
 	void send_packet(void* buf, char packet_type);
 
+	void send_packet_not_recv(void* buf, char packet_type);
+
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_login_packet();
 
@@ -120,10 +122,10 @@ public:
 	void send_stamina_packet(float reduce_amount);
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
-	void send_move_packet();
+	void send_attack_packet(float reduce_amount);
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
-	void send_attack_packet(float reduce_amount);
+	void send_tick_packet();
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_logout_packet();

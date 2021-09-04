@@ -139,16 +139,13 @@ void send_enemy_status(int dest_id, int sour_id)
 	send_packet(dest_id, &packet, SERVER_ENEMY_STATUS);
 }
 
-void send_position_change(int p_id)
+void send_tick_packet(int p_id)
 {
-	server_packet_move packet;
+	server_packet_enemy_status packet;
 	packet.size = sizeof(packet);
-	packet.type = SERVER_PLAYER_MOVE;
-	packet.id = p_id;
-	packet.x = players[p_id].m_x;
-	packet.y = players[p_id].m_y;
+	packet.type = SERVER_ENEMY_STATUS;
 
-	send_packet(p_id, &packet, SERVER_PLAYER_MOVE);
+	send_packet(p_id, &packet, SERVER_ENEMY_STATUS);
 }
 
 void do_recv(int p_id)
@@ -186,19 +183,20 @@ void process_packet_reduce_stamina(int p_id, client_packet_reduce_stamina* packe
 {
 	//players[p_id].m_lock.lock();
 	players[p_id].m_stamina -= packet->reduce_stamina;
-	send_update_stamina(p_id);
 	//players[p_id].m_lock.unlock();
 }
 
-void process_packet_move(int p_id, client_packet_move* packet)
+void process_packet_tick(int p_id, client_packet_tick* packet)
 {
+	players[p_id].m_x = packet->x;
+	players[p_id].m_y = packet->y;
+	send_tick_packet(p_id);
 }
 
 void process_packet_attack(int p_id, client_packet_reduce_health* packet)
 {
 	int enemy = players[p_id].enemy_id;
 	players[enemy].m_hp -= packet->reduce_health;
-	send_enemy_status(p_id, enemy);
 }
 
 void process_packet_logout(int p_id, client_packet_logout* packet)
@@ -296,14 +294,14 @@ void worker()
 							process_packet_reduce_stamina(key, reinterpret_cast<client_packet_reduce_stamina*>(ps));
 							break;
 						}
-					case CLIENT_MOVE:
-						{
-							process_packet_move(key, reinterpret_cast<client_packet_move*>(ps));
-							break;
-						}
 					case CLIENT_ATTACK:
 						{
 							process_packet_attack(key, reinterpret_cast<client_packet_reduce_health*>(ps));
+							break;
+						}
+					case CLIENT_TICK:
+						{
+							process_packet_tick(key, reinterpret_cast<client_packet_tick*>(ps));
 							break;
 						}
 					case CLIENT_LOGOUT:
