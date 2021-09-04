@@ -151,34 +151,6 @@ void send_position_change(int p_id)
 	send_packet(p_id, &packet, SERVER_PLAYER_MOVE);
 }
 
-void setting_viewport(int p_id)
-{
-}
-
-void player_move(int p_id, char dir)
-{
-	short x = players[p_id].m_x;
-	short y = players[p_id].m_y;
-	switch (dir)
-	{
-		case 0:
-			if (y > 0) y--; break;
-		case 1:
-			if (y < (/*WORLD_HEIGHT*/ - 1)) y++; break;
-		case 2:
-			if (x > 0) x--; break;
-		case 3:
-			if (x < /*WORLD_WIDTH*/ - 1) x++; break;
-	}
-
-	players[p_id].m_x = x;
-	players[p_id].m_y = y;
-
-	cout << "( " << x << " , " << y << " ) " << endl;
-
-	send_position_change(p_id);
-}
-
 void do_recv(int p_id)
 {
 	PLAYERINFO& pl = players[p_id];
@@ -220,7 +192,6 @@ void process_packet_reduce_stamina(int p_id, client_packet_reduce_stamina* packe
 
 void process_packet_move(int p_id, client_packet_move* packet)
 {
-	player_move(p_id, packet->dir);
 }
 
 void process_packet_attack(int p_id, client_packet_reduce_health* packet)
@@ -278,16 +249,6 @@ void disconnect(int p_id)
 	players[p_id].id = NOT_INGAME;
 	closesocket(players[p_id].m_socket);
 	//players[p_id].m_lock.unlock();
-}
-
-void go_start_location(int p_id)
-{
-	//
-}
-
-void player_dead(int p_id)
-{
-	go_start_location(p_id);
 }
 
 void worker()
