@@ -80,7 +80,7 @@ void UGameInfoInstance::connectSocket()
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(SERVER_PORT);
 	inet_pton(AF_INET, Server_IP, &serverAddr.sin_addr);
-
+	
 	WSAConnect(serverSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr), NULL, NULL, 0, 0);
 }
 
@@ -138,7 +138,7 @@ void UGameInfoInstance::process_packet()
 		break;
 
 	}
-	r_wsabuf.m_packet_type[0] = -1;
+	//r_wsabuf.m_packet_type[0] = -1;
 }
 
 void UGameInfoInstance::recv_packet()
@@ -148,7 +148,7 @@ void UGameInfoInstance::recv_packet()
 	r_over.m_wsabuf[0].len = MAX_BUFFER;
 	r_over.m_wsabuf[0].buf = reinterpret_cast<CHAR*>(r_over.m_buf);
 	DWORD r_flag = 0;
-	while(true)
+	/*while(true)
 	{
 		if(r_wsabuf.m_packet_type[0] != -1) 
 		{
@@ -158,7 +158,7 @@ void UGameInfoInstance::recv_packet()
 		{
 			break;
 		}
-	}
+	}*/
 	WSARecv(serverSocket, r_over.m_wsabuf, 1, 0, &r_flag, &r_over.m_over, 0);
 
 	process_packet();
