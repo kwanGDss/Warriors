@@ -21,12 +21,13 @@ constexpr int SERVER_LOGIN_ASK = 3;
 
 constexpr int CLIENT_LOGOUT =			0;
 constexpr int CLIENT_LOGIN =			1;
-constexpr int CLIENT_MOVE =				2;
-constexpr int CLIENT_ATTACK =			3;
+constexpr int CLIENT_REDUCE_STAMINA =	2;
+constexpr int CLIENT_MOVE =				3;
+constexpr int CLIENT_ATTACK =			4;
 
 constexpr int SERVER_LOGIN_FAIL =		0;
 constexpr int SERVER_LOGIN_OK =			1;
-constexpr int SERVER_PLAYERS_STATUS =	2;
+constexpr int SERVER_PLAYER_STATUS =	2;
 constexpr int SERVER_PLAYER_MOVE =		3;
 
 enum class OP_TYPE { OP_RECV = 0, OP_SEND = 1, OP_ACCEPT = 2, OP_DO_MOVE = 3};
@@ -128,7 +129,16 @@ struct server_packet_logout
 	int				id;
 };
 
-struct server_packet_players_status
+struct server_packet_player_status
+{
+	unsigned char	size;
+	unsigned char	type;
+	int				id;
+	float			stamina;
+	float			health;
+};
+
+struct server_packet_enemy_status
 {
 	unsigned char	size;
 	unsigned char	type;

@@ -119,6 +119,9 @@ public:
 	void send_login_packet();
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
+	void send_stamina_packet(float reduce_amount);
+
+	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_move_packet();
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")

@@ -114,16 +114,28 @@ void send_login_fail(int p_id)
 	send_packet(p_id, &packet, SERVER_LOGIN_FAIL);
 }
 
+void send_update_stamina(int p_id)
+{
+	server_packet_player_status packet;
+	packet.size = sizeof(packet);
+	packet.type = SERVER_PLAYER_STATUS;
+	packet.id = p_id;
+	packet.stamina = players[p_id].m_stamina;
+	packet.health = players[p_id].m_hp;
+
+	send_packet(p_id, &packet, SERVER_PLAYER_STATUS);
+}
+
 void send_players_status(int dest_id, int sour_id)
 {
-	server_packet_players_status packet;
+	/*server_packet_players_status packet;
 	packet.size = sizeof(packet);
 	packet.type = SERVER_PLAYERS_STATUS;
 	packet.id = sour_id;
 	packet.stamina = players[dest_id].m_stamina;
 	packet.health = players[dest_id].m_hp;
 
-	send_packet(dest_id, &packet, SERVER_PLAYERS_STATUS);
+	send_packet(dest_id, &packet, SERVER_PLAYERS_STATUS);*/
 }
 
 void send_position_change(int p_id)
@@ -180,13 +192,22 @@ void do_recv(int p_id)
 
 void process_packet_login(int p_id, client_packet_login* packet)
 {
-	players[p_id].m_lock.lock();
+	//players[p_id].m_lock.lock();
 	strcpy_s(players[p_id].m_name, packet->name);
 	players[p_id].m_x = 3;
 	players[p_id].m_y = 3;
 	send_login_ok(p_id);
-	players[p_id].m_lock.unlock();
+	//players[p_id].m_lock.unlock();
 	cout << players[p_id].m_name << " Player Connect Success!" << endl;
+}
+
+void process_packet_reduce_stamina(int p_id, client_packet_reduce_stamina* packet)
+{
+	//players[p_id].m_lock.lock();
+	players[p_id].m_stamina -= packet->reduce_stamina;
+	send_update_stamina(p_id);
+	//players[p_id].m_lock.unlock();
+	cout << players[p_id].m_stamina << endl;
 }
 
 void process_packet_move(int p_id, client_packet_move* packet)
@@ -298,6 +319,11 @@ void worker()
 					case CLIENT_LOGIN:
 						{
 							process_packet_login(key, reinterpret_cast<client_packet_login*>(ps));
+							break;
+						}
+					case CLIENT_REDUCE_STAMINA:
+						{
+							process_packet_reduce_stamina(key, reinterpret_cast<client_packet_reduce_stamina*>(ps));
 							break;
 						}
 					case CLIENT_MOVE:

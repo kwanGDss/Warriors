@@ -18,6 +18,7 @@ UGameInfoInstance::~UGameInfoInstance()
 float UGameInfoInstance::reduce_stamina(float reduce_amount)
 {
 	player->m_stamina -= reduce_amount;
+	send_stamina_packet(reduce_amount);
 	return player->m_stamina;
 }
 
@@ -90,7 +91,7 @@ void UGameInfoInstance::process_login_packet()
 
 void UGameInfoInstance::process_update_status()
 {
-	server_packet_players_status* packet = reinterpret_cast<server_packet_players_status*>(r_wsabuf.m_wsabuf[0].buf);
+	server_packet_player_status* packet = reinterpret_cast<server_packet_player_status*>(r_wsabuf.m_wsabuf[0].buf);
 	player->m_stamina = packet->stamina;
 	player->m_hp = packet->health;
 }
@@ -117,9 +118,9 @@ void UGameInfoInstance::process_packet()
 	case SERVER_LOGIN_FAIL:
 		cout << "LOGIN_FAIL" << endl;
 		break;
-	case SERVER_PLAYERS_STATUS:
+	case SERVER_PLAYER_STATUS:
 		cout << "UPDATE_STATUS" << endl;
-
+		process_update_status();
 		break;
 	case SERVER_PLAYER_MOVE:
 		cout << "UPDATE_POSITION" << endl;
@@ -168,6 +169,18 @@ void UGameInfoInstance::send_login_packet()
 	strcpy_s(packet.name, playername);
 
 	send_packet(&packet, CLIENT_LOGIN);
+}
+
+void UGameInfoInstance::send_stamina_packet(float reduce_amount)
+{
+	client_packet_reduce_stamina packet;
+
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_REDUCE_STAMINA;
+	packet.id = player->id;
+	packet.reduce_stamina = reduce_amount;
+
+	send_packet(&packet, CLIENT_REDUCE_STAMINA);
 }
 
 void UGameInfoInstance::send_move_packet()
