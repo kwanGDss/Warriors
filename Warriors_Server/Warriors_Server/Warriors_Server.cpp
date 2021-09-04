@@ -116,67 +116,22 @@ void send_login_fail(int p_id)
 	send_packet(p_id, &packet, SERVER_LOGIN_FAIL);
 }
 
-void send_update_stamina(int p_id)
+void send_tick_packet(int p_id)
 {
-	server_packet_player_status packet;
+	PLAYERINFO& tmp_player = players[p_id];
+	PLAYERINFO& enemy_player = players[tmp_player.enemy_id];
+	server_packet_tick packet;
 	packet.size = sizeof(packet);
-	packet.type = SERVER_PLAYER_STATUS;
-	packet.id = p_id;
-	packet.stamina = players[p_id].m_stamina;
-	packet.health = players[p_id].m_hp;
+	packet.type = SERVER_TICK;
+	packet.player_x = tmp_player.m_x;
+	packet.player_y = tmp_player.m_y;
+	packet.player_hp = tmp_player.m_hp;
+	packet.player_stamina = tmp_player.m_stamina;
+	packet.enemy_x = enemy_player.m_x;
+	packet.enemy_y = enemy_player.m_y;
+	packet.enemy_hp = enemy_player.m_hp;
 
-	send_packet(p_id, &packet, SERVER_PLAYER_STATUS);
-}
-
-void send_enemy_status(int dest_id, int sour_id)
-{
-	server_packet_enemy_status packet;
-	packet.size = sizeof(packet);
-	packet.type = SERVER_ENEMY_STATUS;
-	packet.enemy_id = sour_id;
-	packet.health = players[sour_id].m_hp;
-
-	send_packet(dest_id, &packet, SERVER_ENEMY_STATUS);
-}
-
-void send_position_change(int p_id)
-{
-	server_packet_move packet;
-	packet.size = sizeof(packet);
-	packet.type = SERVER_PLAYER_MOVE;
-	packet.id = p_id;
-	packet.x = players[p_id].m_x;
-	packet.y = players[p_id].m_y;
-
-	send_packet(p_id, &packet, SERVER_PLAYER_MOVE);
-}
-
-void setting_viewport(int p_id)
-{
-}
-
-void player_move(int p_id, char dir)
-{
-	short x = players[p_id].m_x;
-	short y = players[p_id].m_y;
-	switch (dir)
-	{
-		case 0:
-			if (y > 0) y--; break;
-		case 1:
-			if (y < (/*WORLD_HEIGHT*/ - 1)) y++; break;
-		case 2:
-			if (x > 0) x--; break;
-		case 3:
-			if (x < /*WORLD_WIDTH*/ - 1) x++; break;
-	}
-
-	players[p_id].m_x = x;
-	players[p_id].m_y = y;
-
-	cout << "( " << x << " , " << y << " ) " << endl;
-
-	send_position_change(p_id);
+	send_packet(p_id, &packet, SERVER_TICK);
 }
 
 void do_recv(int p_id)
@@ -214,20 +169,20 @@ void process_packet_reduce_stamina(int p_id, client_packet_reduce_stamina* packe
 {
 	//players[p_id].m_lock.lock();
 	players[p_id].m_stamina -= packet->reduce_stamina;
-	send_update_stamina(p_id);
 	//players[p_id].m_lock.unlock();
 }
 
-void process_packet_move(int p_id, client_packet_move* packet)
+void process_packet_tick(int p_id, client_packet_tick* packet)
 {
-	player_move(p_id, packet->dir);
+	players[p_id].m_x = packet->x;
+	players[p_id].m_y = packet->y;
+	send_tick_packet(p_id);
 }
 
 void process_packet_attack(int p_id, client_packet_reduce_health* packet)
 {
 	int enemy = players[p_id].enemy_id;
 	players[enemy].m_hp -= packet->reduce_health;
-	send_enemy_status(p_id, enemy);
 }
 
 void process_packet_logout(int p_id, client_packet_logout* packet)
@@ -280,16 +235,6 @@ void disconnect(int p_id)
 	//players[p_id].m_lock.unlock();
 }
 
-void go_start_location(int p_id)
-{
-	//
-}
-
-void player_dead(int p_id)
-{
-	go_start_location(p_id);
-}
-
 void worker()
 {
 	SOCKADDR_IN clientAddr;
@@ -335,14 +280,14 @@ void worker()
 							process_packet_reduce_stamina(key, reinterpret_cast<client_packet_reduce_stamina*>(ps));
 							break;
 						}
-					case CLIENT_MOVE:
-						{
-							process_packet_move(key, reinterpret_cast<client_packet_move*>(ps));
-							break;
-						}
 					case CLIENT_ATTACK:
 						{
 							process_packet_attack(key, reinterpret_cast<client_packet_reduce_health*>(ps));
+							break;
+						}
+					case CLIENT_TICK:
+						{
+							process_packet_tick(key, reinterpret_cast<client_packet_tick*>(ps));
 							break;
 						}
 					case CLIENT_LOGOUT:

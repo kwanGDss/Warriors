@@ -94,24 +94,18 @@ void UGameInfoInstance::process_login_packet()
 	player->enemy_id = packet->enemy_id;
 }
 
-void UGameInfoInstance::process_update_status()
+void UGameInfoInstance::process_tick()
 {
-	server_packet_player_status* packet = reinterpret_cast<server_packet_player_status*>(r_wsabuf.m_wsabuf[0].buf);
-	player->m_stamina = packet->stamina;
-	player->m_hp = packet->health;
-}
+	server_packet_tick* packet = reinterpret_cast<server_packet_tick*>(r_wsabuf.m_wsabuf[0].buf);
 
-void UGameInfoInstance::process_update_enemy_status()
-{
-	server_packet_enemy_status* packet = reinterpret_cast<server_packet_enemy_status*>(r_wsabuf.m_wsabuf[0].buf);
-	enemy->m_hp = packet->health;
-}
+	player->m_x = packet->player_x;
+	player->m_y = packet->player_y;
+	player->m_hp = packet->player_hp;
+	player->m_stamina = packet->player_stamina;
 
-void UGameInfoInstance::process_update_position()
-{
-	server_packet_move* packet = reinterpret_cast<server_packet_move*>(r_wsabuf.m_wsabuf[0].buf);
-	player->m_x = packet->x;
-	player->m_y = packet->y;
+	enemy->m_x = packet->enemy_x;
+	enemy->m_y = packet->enemy_y;
+	enemy->m_hp = packet->enemy_hp;
 }
 
 void UGameInfoInstance::process_packet()
@@ -127,16 +121,9 @@ void UGameInfoInstance::process_packet()
 		break;
 	case SERVER_LOGIN_FAIL:
 		break;
-	case SERVER_PLAYER_STATUS:
-		process_update_status();
+	case SERVER_TICK:
+		process_tick();
 		break;
-	case SERVER_ENEMY_STATUS:
-		process_update_enemy_status();
-		break;
-	case SERVER_PLAYER_MOVE:
-		process_update_position();
-		break;
-
 	}
 }
 
@@ -170,6 +157,21 @@ void UGameInfoInstance::send_packet(void* buf, char packet_type)
 	recv_packet();
 }
 
+void UGameInfoInstance::send_packet_not_recv(void* buf, char packet_type)
+{
+	SOCKETINFO* s_info = new SOCKETINFO;
+
+	unsigned char packet_size = reinterpret_cast<unsigned char*>(buf)[0];
+	s_info->m_packet_type[0] = TO_SERVER;
+	s_info->m_packet_type[1] = packet_type;
+	memset(&s_info->m_over, 0, sizeof(s_info->m_over));
+	memcpy(s_info->m_buf, buf, packet_size);
+	s_info->m_wsabuf[0].buf = reinterpret_cast<char*>(s_info->m_buf);
+	s_info->m_wsabuf[0].len = packet_size;
+
+	WSASend(serverSocket, s_info->m_wsabuf, 1, 0, 0, &s_info->m_over, 0);
+}
+
 void UGameInfoInstance::send_login_packet()
 {
 	char* playername = TCHAR_TO_ANSI(*Player_Name);
@@ -191,17 +193,7 @@ void UGameInfoInstance::send_stamina_packet(float reduce_amount)
 	packet.id = player->id;
 	packet.reduce_stamina = reduce_amount;
 
-	send_packet(&packet, CLIENT_REDUCE_STAMINA);
-}
-
-void UGameInfoInstance::send_move_packet()
-{
-	client_packet_move packet;
-	packet.size = sizeof(packet);
-	packet.type = CLIENT_MOVE;
-	packet.dir = 3;
-
-	send_packet(&packet, CLIENT_MOVE);
+	send_packet_not_recv(&packet, CLIENT_REDUCE_STAMINA);
 }
 
 void UGameInfoInstance::send_attack_packet(float reduce_amount)
@@ -212,7 +204,18 @@ void UGameInfoInstance::send_attack_packet(float reduce_amount)
 	packet.id = player->id;
 	packet.reduce_health = reduce_amount;
 
-	send_packet(&packet, CLIENT_ATTACK);
+	send_packet_not_recv(&packet, CLIENT_ATTACK);
+}
+
+void UGameInfoInstance::send_tick_packet()
+{
+	client_packet_tick packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_TICK;
+	packet.x = player->m_x;
+	packet.y = player->m_y;
+
+	send_packet(&packet, CLIENT_TICK);
 }
 
 void UGameInfoInstance::send_logout_packet()
@@ -221,19 +224,5 @@ void UGameInfoInstance::send_logout_packet()
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_LOGOUT;
 
-	send_packet(&packet, CLIENT_LOGOUT);
-}
-
-void UGameInfoInstance::do_play()
-{
-	int i = 0;
-	while (true)
-	{
-		if (!i)
-		{
-			send_move_packet();
-			i++;
-		}
-
-	}
+	send_packet_not_recv(&packet, CLIENT_LOGOUT);
 }

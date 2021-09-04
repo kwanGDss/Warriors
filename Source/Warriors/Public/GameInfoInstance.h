@@ -101,17 +101,15 @@ public:
 
 	void process_login_packet();
 
-	void process_update_status();
-
-	void process_update_enemy_status();
-
-	void process_update_position();
+	void process_tick();
 
 	void process_packet();
 
 	void recv_packet();
 
 	void send_packet(void* buf, char packet_type);
+
+	void send_packet_not_recv(void* buf, char packet_type);
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_login_packet();
@@ -120,16 +118,13 @@ public:
 	void send_stamina_packet(float reduce_amount);
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
-	void send_move_packet();
-
-	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_attack_packet(float reduce_amount);
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
-	void send_logout_packet();
+	void send_tick_packet();
 
-	UFUNCTION(BlueprintCallable, Category = "MainLoop")
-	void do_play();
+	UFUNCTION(BlueprintCallable, Category = "SendPacket")
+	void send_logout_packet();
 
 	SOCKET serverSocket;
 
