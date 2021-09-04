@@ -216,7 +216,6 @@ void process_packet_reduce_stamina(int p_id, client_packet_reduce_stamina* packe
 	players[p_id].m_stamina -= packet->reduce_stamina;
 	send_update_stamina(p_id);
 	//players[p_id].m_lock.unlock();
-	cout << players[p_id].m_stamina << endl;
 }
 
 void process_packet_move(int p_id, client_packet_move* packet)
@@ -307,7 +306,6 @@ void worker()
 
 		if (FALSE == ret)
 		{
-			cout << "GQCS error! " << endl;
 			disconnect(key);
 			continue;
 		}
@@ -400,7 +398,7 @@ void worker()
 				do_recv(p_id);
 				do_accept(listenSocket, ex_over);
 	
-				cout << "New Client [" << p_id << "] !" << endl;
+				cout << "New Client [" << n_s.m_name << "] !" << endl;
 
 				//PostQueuedCompletionStatus(h_iocp, 1, key, &ex_over->m_over);
 				break;
