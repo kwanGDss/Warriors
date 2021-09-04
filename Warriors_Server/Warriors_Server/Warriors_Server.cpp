@@ -102,6 +102,7 @@ void send_login_ok(int p_id)
 	packet.id = p_id;
 	packet.hp = players[p_id].m_hp;
 	packet.stamina = players[p_id].m_stamina;
+	packet.enemy_id = players[p_id].enemy_id;
 
 	send_packet(p_id, &packet, SERVER_LOGIN_OK);
 }
@@ -194,8 +195,16 @@ void process_packet_login(int p_id, client_packet_login* packet)
 {
 	//players[p_id].m_lock.lock();
 	strcpy_s(players[p_id].m_name, packet->name);
-	players[p_id].m_x = 3;
-	players[p_id].m_y = 3;
+	if(p_id % 2)
+	{
+		players[p_id].enemy_id = p_id - 1;
+	}
+	else
+	{
+		players[p_id].enemy_id = p_id + 1;
+	}
+	players[p_id].m_hp = 1.f;
+	players[p_id].m_stamina = 1.f;
 	send_login_ok(p_id);
 	//players[p_id].m_lock.unlock();
 	cout << players[p_id].m_name << " Player Connect Success!" << endl;
@@ -207,7 +216,6 @@ void process_packet_reduce_stamina(int p_id, client_packet_reduce_stamina* packe
 	players[p_id].m_stamina -= packet->reduce_stamina;
 	send_update_stamina(p_id);
 	//players[p_id].m_lock.unlock();
-	cout << players[p_id].m_stamina << endl;
 }
 
 void process_packet_move(int p_id, client_packet_move* packet)
@@ -222,21 +230,9 @@ void process_packet_attack(int p_id, client_packet_reduce_health* packet)
 	send_enemy_status(p_id, enemy);
 }
 
-void process_packet_game_start(int p_id, client_packet_game_start* packet)
-{
-	if(p_id % 2)
-	{
-		players[p_id].enemy_id = p_id - 1;
-	}
-	else
-	{
-		players[p_id].enemy_id = p_id + 1;
-	}
-}
-
 void process_packet_logout(int p_id, client_packet_logout* packet)
 {
-	printf_s("%d Client Leave from Server\n", p_id);
+	cout << players[p_id].m_name << " Client Leave from Server";
 	disconnect(p_id);
 }
 
@@ -310,7 +306,6 @@ void worker()
 
 		if (FALSE == ret)
 		{
-			cout << "GQCS error! " << endl;
 			disconnect(key);
 			continue;
 		}
@@ -355,7 +350,6 @@ void worker()
 							process_packet_logout(key, reinterpret_cast<client_packet_logout*>(ps));
 							break;
 						}
-					
 					}
 					remain_data -= packet_size;
 					ps += packet_size;
@@ -404,7 +398,7 @@ void worker()
 				do_recv(p_id);
 				do_accept(listenSocket, ex_over);
 	
-				cout << "New Client [" << p_id << "] !" << endl;
+				cout << "New Client [" << n_s.m_name << "] !" << endl;
 
 				//PostQueuedCompletionStatus(h_iocp, 1, key, &ex_over->m_over);
 				break;
