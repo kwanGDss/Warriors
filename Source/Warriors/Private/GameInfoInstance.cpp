@@ -89,9 +89,9 @@ void UGameInfoInstance::process_login_packet()
 	server_packet_login_ok* packet = reinterpret_cast<server_packet_login_ok*>(r_wsabuf.m_wsabuf[0].buf);
 
 	player->id = packet->id;
-
 	player->m_hp = packet->hp;
 	player->m_stamina = packet->stamina;
+	player->enemy_id = packet->enemy_id;
 }
 
 void UGameInfoInstance::process_update_status()
@@ -138,6 +138,7 @@ void UGameInfoInstance::process_packet()
 		break;
 
 	}
+	r_wsabuf.m_packet_type[0] = -1;
 }
 
 void UGameInfoInstance::recv_packet()
@@ -147,6 +148,17 @@ void UGameInfoInstance::recv_packet()
 	r_over.m_wsabuf[0].len = MAX_BUFFER;
 	r_over.m_wsabuf[0].buf = reinterpret_cast<CHAR*>(r_over.m_buf);
 	DWORD r_flag = 0;
+	while(true)
+	{
+		if(r_wsabuf.m_packet_type[0] != -1) 
+		{
+			process_packet();
+		}
+		else 
+		{
+			break;
+		}
+	}
 	WSARecv(serverSocket, r_over.m_wsabuf, 1, 0, &r_flag, &r_over.m_over, 0);
 
 	process_packet();

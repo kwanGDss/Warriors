@@ -222,6 +222,18 @@ void process_packet_attack(int p_id, client_packet_reduce_health* packet)
 	send_enemy_status(p_id, enemy);
 }
 
+void process_packet_game_start(int p_id, client_packet_game_start* packet)
+{
+	if(p_id % 2)
+	{
+		players[p_id].enemy_id = p_id - 1;
+	}
+	else
+	{
+		players[p_id].enemy_id = p_id + 1;
+	}
+}
+
 void process_packet_logout(int p_id, client_packet_logout* packet)
 {
 	printf_s("%d Client Leave from Server\n", p_id);
@@ -337,7 +349,7 @@ void worker()
 						{
 							process_packet_attack(key, reinterpret_cast<client_packet_reduce_health*>(ps));
 							break;
-						}	
+						}
 					case CLIENT_LOGOUT:
 						{
 							process_packet_logout(key, reinterpret_cast<client_packet_logout*>(ps));

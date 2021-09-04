@@ -23,7 +23,7 @@ constexpr int CLIENT_LOGOUT =			0;
 constexpr int CLIENT_LOGIN =			1;
 constexpr int CLIENT_REDUCE_STAMINA =	2;
 constexpr int CLIENT_ATTACK =			3;
-constexpr int CLIENT_MOVE =				4;
+constexpr int CLIENT_MOVE =				5;
 
 constexpr int SERVER_LOGIN_FAIL =		0;
 constexpr int SERVER_LOGIN_OK =			1;
@@ -100,6 +100,7 @@ struct server_packet_login_ok
 	unsigned char	type;
 	int				id;
 	float			hp, stamina;
+	int				enemy_id;
 };
 
 struct server_packet_login_fail
