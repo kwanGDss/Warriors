@@ -111,16 +111,16 @@ public:
 	bool get_enemy_guard();
 
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	void set_my_parring(bool parring);
+	void set_my_parrying(bool parrying);
 
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	bool get_my_parring();
+	bool get_my_parrying();
 
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	void set_enemy_parring(bool parring);
+	void set_enemy_parrying(bool parrying);
 
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	bool get_enemy_parring();
+	bool get_enemy_parrying();
 
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
 	void set_my_groggy(bool groggy);

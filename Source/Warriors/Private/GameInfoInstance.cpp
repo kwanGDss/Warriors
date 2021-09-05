@@ -76,22 +76,22 @@ bool UGameInfoInstance::get_enemy_guard()
 	return enemy->m_guard;
 }
 
-void UGameInfoInstance::set_my_parring(bool parring)
+void UGameInfoInstance::set_my_parrying(bool parrying)
 {
-	player->m_parrying = parring;
+	player->m_parrying = parrying;
 }
 
-bool UGameInfoInstance::get_my_parring()
+bool UGameInfoInstance::get_my_parrying()
 {
 	return player->m_parrying;
 }
 
-void UGameInfoInstance::set_enemy_parring(bool parring)
+void UGameInfoInstance::set_enemy_parrying(bool parrying)
 {
-	enemy->m_parrying = parring;
+	enemy->m_parrying = parrying;
 }
 
-bool UGameInfoInstance::get_enemy_parring()
+bool UGameInfoInstance::get_enemy_parrying()
 {
 	return enemy->m_parrying;
 }
