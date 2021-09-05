@@ -144,6 +144,11 @@ void send_tick_packet(int p_id)
 	packet.enemy_x = enemy_player.m_x;
 	packet.enemy_y = enemy_player.m_y;
 	packet.enemy_hp = enemy_player.m_hp;
+	packet.player_guard_hit = tmp_player.m_guard_hit;
+	packet.enemy_guard = enemy_player.m_guard;
+	packet.enemy_parrying = enemy_player.m_parrying;
+	packet.enemy_groggy = enemy_player.m_groggy;
+	packet.enemy_guard_hit = enemy_player.m_guard_hit;
 
 	send_packet(p_id, &packet, SERVER_TICK);
 }
@@ -209,6 +214,26 @@ void process_packet_start(int p_id, client_packet_start* packet)
 	players[p_id].m_character_type = packet->character_type;
 	cout << packet->character_type << endl;
 	send_start_packet(p_id);
+}
+
+void process_packet_guard(int p_id, client_packet_guard* packet)
+{
+	players[p_id].m_guard = packet->guard;
+}
+
+void process_packet_parrying(int p_id, client_packet_parrying* packet)
+{
+	players[p_id].m_parrying = packet->parrying;
+}
+
+void process_packet_groggy(int p_id, client_packet_groggy* packet)
+{
+	players[p_id].m_groggy = packet->groggy;
+}
+
+void process_packet_guard_hit(int p_id, client_packet_guard_hit* packet)
+{
+	players[packet->id].m_guard_hit = packet->guard_hit;
 }
 
 void process_packet_logout(int p_id, client_packet_logout* packet)
@@ -324,6 +349,26 @@ void worker()
 					case CLIENT_TICK:
 						{
 							process_packet_tick(key, reinterpret_cast<client_packet_tick*>(ps));
+							break;
+						}
+					case CLIENT_GUARD:
+						{
+							process_packet_guard(key, reinterpret_cast<client_packet_guard*>(ps));
+							break;
+						}
+					case CLIENT_PARRYING:
+						{
+							process_packet_parrying(key, reinterpret_cast<client_packet_parrying*>(ps));
+							break;
+						}
+					case CLIENT_GROGGY:
+						{
+							process_packet_groggy(key, reinterpret_cast<client_packet_groggy*>(ps));
+							break;
+						}
+					case CLIENT_GUARD_HIT:
+						{
+							process_packet_guard_hit(key, reinterpret_cast<client_packet_guard_hit*>(ps));
 							break;
 						}
 					case CLIENT_LOGOUT:

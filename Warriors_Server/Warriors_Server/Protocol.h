@@ -21,6 +21,10 @@ constexpr int CLIENT_REDUCE_STAMINA =	3;
 constexpr int CLIENT_ATTACK =			4;
 constexpr int CLIENT_START =			5;
 constexpr int CLIENT_TICK =				6;
+constexpr int CLIENT_GUARD =			7;
+constexpr int CLIENT_PARRYING =			8;
+constexpr int CLIENT_GROGGY =			9;
+constexpr int CLIENT_GUARD_HIT =		10;
 
 constexpr int SERVER_LOGIN_FAIL =		0;
 constexpr int SERVER_LOGIN_OK =			1;
@@ -69,6 +73,28 @@ struct client_packet_start
 	bool			character_type;
 };
 
+struct client_packet_guard
+{
+	unsigned char	size;
+	unsigned char	type;
+	bool			guard;
+};
+
+struct client_packet_groggy
+{
+	unsigned char	size;
+	unsigned char	type;
+	bool			groggy;
+};
+
+struct client_packet_guard_hit
+{
+	unsigned char	size;
+	unsigned char	type;
+	int				id;
+	bool			guard_hit;
+};
+
 struct client_packet_reduce_stamina
 {
 	unsigned char	size;
@@ -85,15 +111,19 @@ struct client_packet_reduce_health
 	float			reduce_health;
 };
 
+struct client_packet_parrying
+{
+	unsigned char	size;
+	unsigned char	type;
+	bool			parrying;
+};
+
 struct client_packet_tick
 {
 	unsigned char	size;
 	unsigned char	type;
 	float			x;
 	float			y;
-	bool			guard;
-	bool			parrying;
-	bool			groggy;
 };
 
 struct client_packet_logout
@@ -166,5 +196,10 @@ struct server_packet_tick
 	float			enemy_x;
 	float			enemy_y;
 	float			enemy_hp;
+	bool			player_guard_hit;
+	bool			enemy_guard;
+	bool			enemy_parrying;
+	bool			enemy_groggy;
+	bool			enemy_guard_hit;
 };
 #pragma pack (pop)
