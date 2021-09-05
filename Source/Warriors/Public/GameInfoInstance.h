@@ -41,7 +41,7 @@ struct PLAYERINFO
 
 	mutex					m_lock;
 	char					m_name[16];
-	int						m_x = rand() % 10, m_y = rand() % 10;
+	float					m_x = 0, m_y = 0;
 	float					m_hp = 1.f, m_stamina = 1.f;
 	bool					m_guard = false;
 	bool					m_parrying = false;
@@ -157,6 +157,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
 	bool get_enemy_charactor_type();
+
+	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
+	void set_my_position(float x, float y);
 
 	UFUNCTION(BlueprintCallable, Category = "ProcessSocket")
 	void initSocket();

@@ -156,6 +156,11 @@ bool UGameInfoInstance::get_enemy_charactor_type()
 	return enemy->m_character_type;
 }
 
+void UGameInfoInstance::set_my_position(float x, float y)
+{
+	player->m_x = x;
+	player->m_y = y;
+}
 
 void UGameInfoInstance::initSocket()
 {
