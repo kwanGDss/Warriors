@@ -203,6 +203,18 @@ public:
 	void send_start_packet();
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
+	void send_guard_packet();
+
+	UFUNCTION(BlueprintCallable, Category = "SendPacket")
+	void send_parrying_packet();
+
+	UFUNCTION(BlueprintCallable, Category = "SendPacket")
+	void send_groggy_packet();
+
+	UFUNCTION(BlueprintCallable, Category = "SendPacket")
+	void send_guard_hit_packet(bool whosplayer, bool guard_hit);
+
+	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_tick_packet();
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")

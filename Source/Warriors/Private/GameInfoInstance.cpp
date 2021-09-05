@@ -59,6 +59,7 @@ float UGameInfoInstance::get_enemy_health()
 void UGameInfoInstance::set_my_guard(bool guard)
 {
 	player->m_guard = guard;
+	send_guard_packet();
 }
 
 bool UGameInfoInstance::get_my_guard()
@@ -79,6 +80,7 @@ bool UGameInfoInstance::get_enemy_guard()
 void UGameInfoInstance::set_my_parrying(bool parrying)
 {
 	player->m_parrying = parrying;
+	send_parrying_packet();
 }
 
 bool UGameInfoInstance::get_my_parrying()
@@ -99,6 +101,7 @@ bool UGameInfoInstance::get_enemy_parrying()
 void UGameInfoInstance::set_my_groggy(bool groggy)
 {
 	player->m_groggy = groggy;
+	send_groggy_packet();
 }
 
 bool UGameInfoInstance::get_my_groggy()
@@ -119,6 +122,7 @@ bool UGameInfoInstance::get_enemy_groggy()
 void UGameInfoInstance::set_my_guard_hit(bool guard_hit)
 {
 	player->m_guard_hit = guard_hit;
+	send_guard_hit_packet(0, guard_hit);
 }
 
 bool UGameInfoInstance::get_my_guard_hit()
@@ -129,6 +133,7 @@ bool UGameInfoInstance::get_my_guard_hit()
 void UGameInfoInstance::set_enemy_guard_hit(bool guard_hit)
 {
 	enemy->m_guard_hit = guard_hit;
+	send_guard_hit_packet(1, guard_hit);
 }
 
 bool UGameInfoInstance::get_enemy_guard_hit()
@@ -226,10 +231,14 @@ void UGameInfoInstance::process_tick()
 
 	player->m_hp = packet->player_hp;
 	player->m_stamina = packet->player_stamina;
-
+	player->m_guard_hit = packet->player_guard_hit;
 	enemy->m_x = packet->enemy_x;
 	enemy->m_y = packet->enemy_y;
 	enemy->m_hp = packet->enemy_hp;
+	enemy->m_guard = packet->enemy_guard;
+	enemy->m_parrying = packet->enemy_parrying;
+	enemy->m_groggy = packet->enemy_groggy;
+	enemy->m_guard_hit = packet->enemy_guard_hit;
 }
 
 void UGameInfoInstance::process_packet()
@@ -354,6 +363,54 @@ void UGameInfoInstance::send_start_packet()
 	packet.character_type = player->m_character_type;
 
 	send_packet(&packet, CLIENT_START);
+}
+
+void UGameInfoInstance::send_guard_packet()
+{
+	client_packet_guard packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_GUARD;
+	packet.guard = player->m_guard;
+
+	send_packet_not_recv(&packet, CLIENT_GUARD);
+}
+
+void UGameInfoInstance::send_parrying_packet()
+{
+	client_packet_parrying packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_PARRYING;
+	packet.parrying = player->m_parrying;
+
+	send_packet_not_recv(&packet, CLIENT_PARRYING);
+}
+
+void UGameInfoInstance::send_groggy_packet()
+{
+	client_packet_groggy packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_GROGGY;
+	packet.groggy = player->m_groggy;
+
+	send_packet_not_recv(&packet, CLIENT_GROGGY);
+}
+
+void UGameInfoInstance::send_guard_hit_packet(bool whosplayer, bool guard_hit)
+{
+	client_packet_guard_hit packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_GUARD_HIT;
+	if(!whosplayer)
+	{
+		packet.id = player->id;
+		packet.guard_hit = guard_hit;
+	}
+	else
+	{
+		packet.id = player->enemy_id;
+		packet.guard_hit = guard_hit;
+	}
+	send_packet_not_recv(&packet, CLIENT_GUARD_HIT);
 }
 
 void UGameInfoInstance::send_tick_packet()
