@@ -62,6 +62,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
 	bool bIsDead;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+	FString CharacterName;
+	
 protected:
 	///** Resets HMD orientation in VR. */
 	//void OnResetVR();
