@@ -59,6 +59,107 @@ float UGameInfoInstance::get_enemy_health()
 	return enemy->m_hp;
 }
 
+void UGameInfoInstance::set_my_guard(bool guard)
+{
+	player->m_guard = guard;
+}
+
+bool UGameInfoInstance::get_my_guard()
+{
+	return player->m_guard;
+}
+
+void UGameInfoInstance::set_enemy_guard(bool guard)
+{
+	enemy->m_guard = guard;
+}
+
+bool UGameInfoInstance::get_enemy_guard()
+{
+	return enemy->m_guard;
+}
+
+void UGameInfoInstance::set_my_parring(bool parring)
+{
+	player->m_parring = parring;
+}
+
+bool UGameInfoInstance::get_my_parring()
+{
+	return player->m_parring;
+}
+
+void UGameInfoInstance::set_enemy_parring(bool parring)
+{
+	enemy->m_parring = parring;
+}
+
+bool UGameInfoInstance::get_enemy_parring()
+{
+	return enemy->m_parring;
+}
+
+void UGameInfoInstance::set_my_groggy(bool groggy)
+{
+	player->m_groggy = groggy;
+}
+
+bool UGameInfoInstance::get_my_groggy()
+{
+	return player->m_groggy;
+}
+
+void UGameInfoInstance::set_enemy_groggy(bool groggy)
+{
+	enemy->m_groggy = groggy;
+}
+
+bool UGameInfoInstance::get_enemy_groggy()
+{
+	return enemy->m_groggy;
+}
+
+void UGameInfoInstance::set_my_guard_hit(bool guard_hit)
+{
+	player->m_guard_hit = guard_hit;
+}
+
+bool UGameInfoInstance::get_my_guard_hit()
+{
+	return player->m_guard_hit;
+}
+
+void UGameInfoInstance::set_enemy_guard_hit(bool guard_hit)
+{
+	enemy->m_guard_hit = guard_hit;
+}
+
+bool UGameInfoInstance::get_enemy_guard_hit()
+{
+	return enemy->m_guard_hit;
+}
+
+void UGameInfoInstance::set_my_character_type(bool character_type)
+{
+	player->m_character_type = character_type;
+}
+
+bool UGameInfoInstance::get_my_character_type()
+{
+	return player->m_character_type;
+}
+
+void UGameInfoInstance::set_enemy_charactor_type(bool character_type)
+{
+	enemy->m_character_type = character_type;
+}
+
+bool UGameInfoInstance::get_enemy_charactor_type()
+{
+	return enemy->m_character_type;
+}
+
+
 void UGameInfoInstance::initSocket()
 {
 	char* Server_IP = TCHAR_TO_ANSI(*IPAddress);
