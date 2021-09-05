@@ -17,14 +17,12 @@ UGameInfoInstance::~UGameInfoInstance()
 
 float UGameInfoInstance::reduce_stamina(float reduce_amount)
 {
-	//player->m_stamina -= reduce_amount;
 	send_stamina_packet(reduce_amount);
 	return player->m_stamina;
 }
 
 float UGameInfoInstance::increase_stamina(float increase_amount)
 {
-	//player->m_stamina += increase_amount;
 	float reduce_amount = -increase_amount;
 	send_stamina_packet(reduce_amount);
 	return player->m_stamina;
@@ -44,7 +42,6 @@ float UGameInfoInstance::get_my_stamina()
 
 void UGameInfoInstance::set_my_stamina(float increase_amount)
 {
-	//player->m_stamina += increase_amount;
 	float reduce_amount = -increase_amount;
 	send_stamina_packet(reduce_amount);
 }
