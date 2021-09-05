@@ -43,6 +43,11 @@ struct PLAYERINFO
 	char					m_name[16];
 	int						m_x = rand() % 10, m_y = rand() % 10;
 	float					m_hp = 1.f, m_stamina = 1.f;
+	bool					m_guard = false;
+	bool					m_parring = false;
+	bool					m_groggy = false;
+	bool					m_guard_hit = false;
+	bool					m_character_type = 0; // 0 = knight / 1=viking
 
 	PLAYERINFO& operator = (const PLAYERINFO& Right)
 	{

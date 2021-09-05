@@ -39,19 +39,19 @@ public:
 	//FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
-	bool bIsDamaged;
+	bool bIsDamaged;//
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
-	bool bHitTheEnemy;
+	bool bHitTheEnemy;//
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
-	bool bCanParry;
+	bool bCanParry;//
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
-	bool bCanParriedByEnemy;
+	bool bCanParriedByEnemy; // server 
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
-	bool bBeParriedByEnemy;
+	bool bBeParriedByEnemy; // server 
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
 	bool bIsGuard;
@@ -60,10 +60,10 @@ public:
 	bool bHitGuardByEnemy;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
-	bool bIsDead;
+	bool bIsDead; //
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
-	FString CharacterName;
+	FString CharacterName; //delete
 	
 protected:
 	///** Resets HMD orientation in VR. */
