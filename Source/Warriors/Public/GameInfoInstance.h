@@ -98,66 +98,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
 	float get_enemy_health();
 
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	void set_my_guard(bool guard);
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	bool get_my_guard();
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	void set_enemy_guard(bool guard);
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	bool get_enemy_guard();
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	void set_my_parring(bool parring);
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	bool get_my_parring();
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	void set_enemy_parring(bool parring);
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	bool get_enemy_parring();
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	void set_my_groggy(bool groggy);
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	bool get_my_groggy();
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	void set_enemy_groggy(bool groggy);
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	bool get_enemy_groggy();
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	void set_my_guard_hit(bool guard_hit);
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	bool get_my_guard_hit();
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	void set_enemy_guard_hit(bool guard_hit);
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	bool get_enemy_guard_hit();
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	void set_my_character_type(bool character_type);
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	bool get_my_character_type();
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	void set_enemy_charactor_type(bool character_type);
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	bool get_enemy_charactor_type();
-
 	UFUNCTION(BlueprintCallable, Category = "ProcessSocket")
 	void initSocket();
 
