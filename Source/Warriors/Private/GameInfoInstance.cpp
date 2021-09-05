@@ -31,7 +31,7 @@ float UGameInfoInstance::increase_stamina(float increase_amount)
 float UGameInfoInstance::reduce_health(float reduce_amount)
 {
 	player->m_hp -= reduce_amount;
-	send_attack_packet(reduce_amount);
+	send_reduce_health(reduce_amount);
 	return player->m_hp;
 }
 
@@ -341,6 +341,17 @@ void UGameInfoInstance::send_change_character_packet()
 	packet.change_character = player->m_character_type;
 
 	send_packet_not_recv(&packet, CLIENT_CHANGE_CHARACTER);
+}
+
+void UGameInfoInstance::send_reduce_health(float reduce_amount)
+{
+	client_packet_reduce_health packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_ATTACK;
+	packet.id = player->id;
+	packet.reduce_health = reduce_amount;
+
+	send_packet_not_recv(&packet, CLIENT_ATTACK);
 }
 
 void UGameInfoInstance::send_stamina_packet(float reduce_amount)

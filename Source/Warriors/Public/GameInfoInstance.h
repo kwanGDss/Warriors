@@ -201,6 +201,9 @@ public:
 	void send_change_character_packet();
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
+	void send_reduce_health(float reduce_amount);
+
+	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_stamina_packet(float reduce_amount);
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")

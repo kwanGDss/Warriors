@@ -145,7 +145,7 @@ void send_tick_packet(int p_id)
 	packet.enemy_x = enemy_player.m_x;
 	packet.enemy_y = enemy_player.m_y;
 	packet.enemy_hp = enemy_player.m_hp;
-	packet.player_be_hit = tmp_player.m_behit;
+	packet.player_be_hit = tmp_player.m_be_hit;
 	packet.player_guard_hit = tmp_player.m_guard_hit;
 	packet.enemy_guard = enemy_player.m_guard;
 	packet.enemy_parrying = enemy_player.m_parrying;
@@ -207,9 +207,8 @@ void process_packet_tick(int p_id, client_packet_tick* packet)
 
 void process_packet_attack(int p_id, client_packet_reduce_health* packet)
 {
-	int enemy = players[p_id].enemy_id;
-	players[enemy].m_hp -= packet->reduce_health;
-	players[enemy].m_be_hit = true;
+	players[packet->id].m_hp -= packet->reduce_health;
+	players[packet->id].m_be_hit = true;
 }
 
 void process_packet_start(int p_id, client_packet_start* packet)

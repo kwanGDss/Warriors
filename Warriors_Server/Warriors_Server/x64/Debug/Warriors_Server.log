@@ -1,6 +1,5 @@
 ﻿  Common.cpp
   Warriors_Server.cpp
-C:\M_S\Warriors\Warriors_Server\Warriors_Server\Warriors_Server.cpp(394,5): warning C4060: switch문에 'case' 또는 'default' 레이블이 없습니다.
+C:\M_S\Warriors\Warriors_Server\Warriors_Server\Warriors_Server.cpp(406,5): warning C4060: switch문에 'case' 또는 'default' 레이블이 없습니다.
   코드를 생성하고 있습니다...
-  LINK : C:\M_S\Warriors\Warriors_Server\Warriors_Server\x64\Debug\Warriors_Server.exe을(를) 찾을 수 없거나 마지막 증분 링크에 의해 빌드되지 않았습니다. 전체 링크를 수행하고 있습니다.
   Warriors_Server.vcxproj -> C:\M_S\Warriors\Warriors_Server\Warriors_Server\x64\Debug\Warriors_Server.exe
