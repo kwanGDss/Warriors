@@ -139,8 +139,6 @@ void send_tick_packet(int p_id)
 	server_packet_tick packet;
 	packet.size = sizeof(packet);
 	packet.type = SERVER_TICK;
-	packet.player_x = tmp_player.m_x;
-	packet.player_y = tmp_player.m_y;
 	packet.player_hp = tmp_player.m_hp;
 	packet.player_stamina = tmp_player.m_stamina;
 	packet.enemy_x = enemy_player.m_x;

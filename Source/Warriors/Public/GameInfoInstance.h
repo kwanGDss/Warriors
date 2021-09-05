@@ -161,6 +161,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
 	void set_my_position(float x, float y);
 
+	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
+	FVector2D get_my_position();
+
+	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
+	FVector2D get_enemy_position();
+
 	UFUNCTION(BlueprintCallable, Category = "ProcessSocket")
 	void initSocket();
 

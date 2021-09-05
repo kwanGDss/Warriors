@@ -161,8 +161,6 @@ struct server_packet_tick
 {
 	unsigned char	size;
 	unsigned char	type;
-	float			player_x;
-	float			player_y;
 	float			player_hp;
 	float			player_stamina;
 	float			enemy_x;

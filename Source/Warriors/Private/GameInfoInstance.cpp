@@ -162,6 +162,22 @@ void UGameInfoInstance::set_my_position(float x, float y)
 	player->m_y = y;
 }
 
+FVector2D UGameInfoInstance::get_my_position()
+{
+	FVector2D player_position;
+	player_position.X = player->m_x;
+	player_position.Y = player->m_y;
+	return player_position;
+}
+
+FVector2D UGameInfoInstance::get_enemy_position()
+{
+	FVector2D enemy_position;
+	enemy_position.X = enemy->m_x;
+	enemy_position.Y = enemy->m_y;
+	return enemy_position;
+}
+
 void UGameInfoInstance::initSocket()
 {
 	char* Server_IP = TCHAR_TO_ANSI(*IPAddress);
@@ -208,8 +224,6 @@ void UGameInfoInstance::process_tick()
 {
 	server_packet_tick* packet = reinterpret_cast<server_packet_tick*>(r_wsabuf.m_wsabuf[0].buf);
 
-	player->m_x = packet->player_x;
-	player->m_y = packet->player_y;
 	player->m_hp = packet->player_hp;
 	player->m_stamina = packet->player_stamina;
 
