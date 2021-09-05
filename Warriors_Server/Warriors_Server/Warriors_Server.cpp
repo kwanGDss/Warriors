@@ -39,7 +39,7 @@ struct PLAYERINFO
 
 	mutex					m_lock;
 	char					m_name[16];
-	int						m_x = rand() % 10, m_y = rand() % 10;
+	float					m_x = 0, m_y = 0;
 	float					m_hp = 1.f, m_stamina = 1.f;
 
 	PLAYERINFO& operator = (const PLAYERINFO& Right)
@@ -333,8 +333,8 @@ void worker()
 				n_s.m_recv_over.m_packet_type[0] = TO_SERVER;
 				n_s.m_recv_over.m_packet_type[1] = CLIENT_LOGIN;
 				n_s.m_socket = c_socket;
-				n_s.m_x = 3;
-				n_s.m_y = 3;
+				n_s.m_x = 3.f;
+				n_s.m_y = 3.f;
 				n_s.m_name[0] = 0;
 				n_s.m_lock.unlock();
 

@@ -71,8 +71,8 @@ struct client_packet_tick
 {
 	unsigned char	size;
 	unsigned char	type;
-	int				x;
-	int				y;
+	float			x;
+	float			y;
 };
 
 struct client_packet_logout
@@ -133,12 +133,12 @@ struct server_packet_tick
 {
 	unsigned char	size;
 	unsigned char	type;
-	int				player_x;
-	int				player_y;
+	float			player_x;
+	float			player_y;
 	float			player_hp;
 	float			player_stamina;
-	int				enemy_x;
-	int				enemy_y;
+	float			enemy_x;
+	float			enemy_y;
 	float			enemy_hp;
 };
 #pragma pack (pop)
