@@ -175,7 +175,7 @@ bool UGameInfoInstance::get_my_be_hit()
 void UGameInfoInstance::set_my_be_hit(bool be_hit)
 {
 	player->m_be_hit = be_hit;
-	send_be_hit_packet();
+	send_be_hit_packet(be_hit);
 }
 
 FVector2D UGameInfoInstance::get_my_position()

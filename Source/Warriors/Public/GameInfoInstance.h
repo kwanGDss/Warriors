@@ -210,7 +210,7 @@ public:
 	void send_start_packet();
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
-	void send_be_hit_packet();
+	void send_be_hit_packet(bool be_hit);
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_guard_packet();
