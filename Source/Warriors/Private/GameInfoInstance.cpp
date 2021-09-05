@@ -78,22 +78,22 @@ bool UGameInfoInstance::get_enemy_guard()
 
 void UGameInfoInstance::set_my_parring(bool parring)
 {
-	player->m_parring = parring;
+	player->m_parrying = parring;
 }
 
 bool UGameInfoInstance::get_my_parring()
 {
-	return player->m_parring;
+	return player->m_parrying;
 }
 
 void UGameInfoInstance::set_enemy_parring(bool parring)
 {
-	enemy->m_parring = parring;
+	enemy->m_parrying = parring;
 }
 
 bool UGameInfoInstance::get_enemy_parring()
 {
-	return enemy->m_parring;
+	return enemy->m_parrying;
 }
 
 void UGameInfoInstance::set_my_groggy(bool groggy)
