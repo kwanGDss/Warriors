@@ -197,6 +197,13 @@ void UGameInfoInstance::process_login_packet()
 	player->enemy_id = packet->enemy_id;
 }
 
+void UGameInfoInstance::process_start_packet()
+{
+	server_packet_start* packet = reinterpret_cast<server_packet_start*>(r_wsabuf.m_wsabuf[0].buf);
+
+	enemy->m_character_type = packet->enemy_character_type;
+}
+
 void UGameInfoInstance::process_tick()
 {
 	server_packet_tick* packet = reinterpret_cast<server_packet_tick*>(r_wsabuf.m_wsabuf[0].buf);
@@ -223,6 +230,9 @@ void UGameInfoInstance::process_packet()
 		process_login_packet();
 		break;
 	case SERVER_LOGIN_FAIL:
+		break;
+	case SERVER_START:
+		process_start_packet();
 		break;
 	case SERVER_TICK:
 		process_tick();
@@ -287,6 +297,17 @@ void UGameInfoInstance::send_login_packet()
 	send_packet(&packet, CLIENT_LOGIN);
 }
 
+void UGameInfoInstance::send_change_character_packet()
+{
+	client_packet_change_character packet;
+
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_CHANGE_CHARACTER;
+	packet.change_character = player->m_character_type;
+
+	send_packet_not_recv(&packet, CLIENT_CHANGE_CHARACTER);
+}
+
 void UGameInfoInstance::send_stamina_packet(float reduce_amount)
 {
 	client_packet_reduce_stamina packet;
@@ -308,6 +329,17 @@ void UGameInfoInstance::send_attack_packet(float reduce_amount)
 	packet.reduce_health = reduce_amount;
 
 	send_packet_not_recv(&packet, CLIENT_ATTACK);
+}
+
+void UGameInfoInstance::send_start_packet()
+{
+	client_packet_start packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_START;
+	packet.id = player->id;
+	packet.character_type = player->m_character_type;
+
+	send_packet(&packet, CLIENT_START);
 }
 
 void UGameInfoInstance::send_tick_packet()

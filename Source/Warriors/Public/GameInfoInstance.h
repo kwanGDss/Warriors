@@ -169,6 +169,8 @@ public:
 
 	void process_login_packet();
 
+	void process_start_packet();
+
 	void process_tick();
 
 	void process_packet();
@@ -183,10 +185,16 @@ public:
 	void send_login_packet();
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
+	void send_change_character_packet();
+
+	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_stamina_packet(float reduce_amount);
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_attack_packet(float reduce_amount);
+
+	UFUNCTION(BlueprintCallable, Category = "SendPacket")
+	void send_start_packet();
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_tick_packet();

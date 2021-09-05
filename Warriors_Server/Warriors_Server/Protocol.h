@@ -16,15 +16,18 @@ constexpr int SERVER_LOGIN_ASK = 3;
 
 constexpr int CLIENT_LOGOUT =			0;
 constexpr int CLIENT_LOGIN =			1;
-constexpr int CLIENT_REDUCE_STAMINA =	2;
-constexpr int CLIENT_ATTACK =			3;
-constexpr int CLIENT_TICK =				4;
+constexpr int CLIENT_CHANGE_CHARACTER = 2;
+constexpr int CLIENT_REDUCE_STAMINA =	3;
+constexpr int CLIENT_ATTACK =			4;
+constexpr int CLIENT_START =			5;
+constexpr int CLIENT_TICK =				6;
 
 constexpr int SERVER_LOGIN_FAIL =		0;
 constexpr int SERVER_LOGIN_OK =			1;
 constexpr int SERVER_PLAYER_STATUS =	2;
 constexpr int SERVER_ENEMY_STATUS =		3;
-constexpr int SERVER_TICK =				4;
+constexpr int SERVER_START =			4;
+constexpr int SERVER_TICK =				5;
 
 enum class OP_TYPE { OP_RECV = 0, OP_SEND = 1, OP_ACCEPT = 2, OP_DO_MOVE = 3};
 enum class S_STATE { STATE_FREE = 0, STATE_CONNECTED = 1, STATE_INGAME = 2 };
@@ -51,6 +54,21 @@ struct client_packet_login
 	char			name[MAX_NAME];
 };
 
+struct client_packet_change_character
+{
+	unsigned char	size;
+	unsigned char	type;
+	bool			change_character;
+};
+
+struct client_packet_start
+{
+	unsigned char	size;
+	unsigned char	type;
+	int				id;
+	bool			character_type;
+};
+
 struct client_packet_reduce_stamina
 {
 	unsigned char	size;
@@ -73,6 +91,9 @@ struct client_packet_tick
 	unsigned char	type;
 	float			x;
 	float			y;
+	bool			guard;
+	bool			parrying;
+	bool			groggy;
 };
 
 struct client_packet_logout
@@ -127,6 +148,13 @@ struct server_packet_enemy_status
 	unsigned char	type;
 	int				enemy_id;
 	float			health;
+};
+
+struct server_packet_start
+{
+	unsigned char	size;
+	unsigned char	type;
+	bool			enemy_character_type;
 };
 
 struct server_packet_tick

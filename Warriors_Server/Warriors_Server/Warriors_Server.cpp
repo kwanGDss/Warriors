@@ -41,6 +41,11 @@ struct PLAYERINFO
 	char					m_name[16];
 	float					m_x = 0, m_y = 0;
 	float					m_hp = 1.f, m_stamina = 1.f;
+	bool					m_guard = false;
+	bool					m_parrying = false;
+	bool					m_groggy = false;
+	bool					m_guard_hit = false;
+	bool					m_character_type = 0; // 0 = knight / 1=viking
 
 	PLAYERINFO& operator = (const PLAYERINFO& Right)
 	{
@@ -116,6 +121,17 @@ void send_login_fail(int p_id)
 	send_packet(p_id, &packet, SERVER_LOGIN_FAIL);
 }
 
+void send_start_packet(int p_id)
+{
+	server_packet_start packet;
+	
+	packet.size = sizeof(packet);
+	packet.type = SERVER_START;
+	packet.enemy_character_type = players[players[p_id].enemy_id].m_character_type;
+
+	send_packet(p_id, &packet, SERVER_START);
+}
+
 void send_tick_packet(int p_id)
 {
 	PLAYERINFO& tmp_player = players[p_id];
@@ -165,6 +181,11 @@ void process_packet_login(int p_id, client_packet_login* packet)
 	cout << players[p_id].m_name << " Player Connect Success!" << endl;
 }
 
+void process_packet_change_character(int p_id, client_packet_change_character* packet)
+{
+	players[p_id].m_character_type = packet->change_character;
+}
+
 void process_packet_reduce_stamina(int p_id, client_packet_reduce_stamina* packet)
 {
 	//players[p_id].m_lock.lock();
@@ -183,6 +204,12 @@ void process_packet_attack(int p_id, client_packet_reduce_health* packet)
 {
 	int enemy = players[p_id].enemy_id;
 	players[enemy].m_hp -= packet->reduce_health;
+}
+
+void process_packet_start(int p_id, client_packet_start* packet)
+{
+	players[p_id].m_character_type = packet->character_type;
+	send_start_packet(p_id);
 }
 
 void process_packet_logout(int p_id, client_packet_logout* packet)
@@ -275,6 +302,11 @@ void worker()
 							process_packet_login(key, reinterpret_cast<client_packet_login*>(ps));
 							break;
 						}
+					case CLIENT_CHANGE_CHARACTER:
+						{
+							process_packet_change_character(key, reinterpret_cast<client_packet_change_character*>(ps));
+							break;
+						}
 					case CLIENT_REDUCE_STAMINA:
 						{
 							process_packet_reduce_stamina(key, reinterpret_cast<client_packet_reduce_stamina*>(ps));
@@ -283,6 +315,11 @@ void worker()
 					case CLIENT_ATTACK:
 						{
 							process_packet_attack(key, reinterpret_cast<client_packet_reduce_health*>(ps));
+							break;
+						}
+					case CLIENT_START:
+						{
+							process_packet_start(key, reinterpret_cast<client_packet_start*>(ps));
 							break;
 						}
 					case CLIENT_TICK:
