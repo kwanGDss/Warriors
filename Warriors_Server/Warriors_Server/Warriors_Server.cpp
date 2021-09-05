@@ -245,7 +245,7 @@ void process_packet_guard_hit(int p_id, client_packet_guard_hit* packet)
 
 void process_packet_logout(int p_id, client_packet_logout* packet)
 {
-	cout << players[p_id].m_name << " Client Leave from Server";
+	cout << players[p_id].m_name << " Client Leave from Server" << endl;
 	disconnect(p_id);
 }
 
