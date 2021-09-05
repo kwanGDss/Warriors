@@ -25,6 +25,7 @@ constexpr int CLIENT_GUARD =			7;
 constexpr int CLIENT_PARRYING =			8;
 constexpr int CLIENT_GROGGY =			9;
 constexpr int CLIENT_GUARD_HIT =		10;
+constexpr int CLIENT_BE_HIT =			11;
 
 constexpr int SERVER_LOGIN_FAIL =		0;
 constexpr int SERVER_LOGIN_OK =			1;
@@ -71,6 +72,13 @@ struct client_packet_start
 	unsigned char	type;
 	int				id;
 	bool			character_type;
+};
+
+struct client_packet_be_hit
+{
+	unsigned char	size;
+	unsigned char	type;
+	bool			be_hit;
 };
 
 struct client_packet_guard
@@ -196,6 +204,7 @@ struct server_packet_tick
 	float			enemy_x;
 	float			enemy_y;
 	float			enemy_hp;
+	bool			player_be_hit;
 	bool			player_guard_hit;
 	bool			enemy_guard;
 	bool			enemy_parrying;

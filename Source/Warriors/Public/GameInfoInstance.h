@@ -43,6 +43,7 @@ struct PLAYERINFO
 	char					m_name[16];
 	float					m_x = 0, m_y = 0;
 	float					m_hp = 1.f, m_stamina = 1.f;
+	bool					m_be_hit = false;
 	bool					m_guard = false;
 	bool					m_parrying = false;
 	bool					m_groggy = false;
@@ -162,6 +163,12 @@ public:
 	void set_my_position(float x, float y);
 
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
+	bool get_my_be_hit();
+
+	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
+	void set_my_be_hit(bool be_hit);
+
+	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
 	FVector2D get_my_position();
 
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
@@ -201,6 +208,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_start_packet();
+
+	UFUNCTION(BlueprintCallable, Category = "SendPacket")
+	void send_be_hit_packet();
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_guard_packet();

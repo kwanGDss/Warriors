@@ -41,6 +41,7 @@ struct PLAYERINFO
 	char					m_name[16];
 	float					m_x = 0, m_y = 0;
 	float					m_hp = 1.f, m_stamina = 1.f;
+	bool					m_be_hit = false;
 	bool					m_guard = false;
 	bool					m_parrying = false;
 	bool					m_groggy = false;
@@ -144,6 +145,7 @@ void send_tick_packet(int p_id)
 	packet.enemy_x = enemy_player.m_x;
 	packet.enemy_y = enemy_player.m_y;
 	packet.enemy_hp = enemy_player.m_hp;
+	packet.player_be_hit = tmp_player.m_behit;
 	packet.player_guard_hit = tmp_player.m_guard_hit;
 	packet.enemy_guard = enemy_player.m_guard;
 	packet.enemy_parrying = enemy_player.m_parrying;
@@ -207,6 +209,7 @@ void process_packet_attack(int p_id, client_packet_reduce_health* packet)
 {
 	int enemy = players[p_id].enemy_id;
 	players[enemy].m_hp -= packet->reduce_health;
+	players[enemy].m_be_hit = true;
 }
 
 void process_packet_start(int p_id, client_packet_start* packet)
@@ -214,6 +217,11 @@ void process_packet_start(int p_id, client_packet_start* packet)
 	players[p_id].m_character_type = packet->character_type;
 	cout << packet->character_type << endl;
 	send_start_packet(p_id);
+}
+
+void process_packet_be_hit(int p_id, client_packet_be_hit* packet)
+{
+	players[p_id].m_be_hit = packet->be_hit;
 }
 
 void process_packet_guard(int p_id, client_packet_guard* packet)
@@ -344,6 +352,11 @@ void worker()
 					case CLIENT_START:
 						{
 							process_packet_start(key, reinterpret_cast<client_packet_start*>(ps));
+							break;
+						}
+					case CLIENT_BE_HIT:
+						{
+							process_packet_be_hit(key, reinterpret_cast<client_packet_be_hit*>(ps));
 							break;
 						}
 					case CLIENT_TICK:

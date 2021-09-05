@@ -167,6 +167,17 @@ void UGameInfoInstance::set_my_position(float x, float y)
 	player->m_y = y;
 }
 
+bool UGameInfoInstance::get_my_be_hit()
+{
+	return player->m_be_hit;
+}
+
+void UGameInfoInstance::set_my_be_hit(bool be_hit)
+{
+	player->m_be_hit = be_hit;
+	send_be_hit_packet();
+}
+
 FVector2D UGameInfoInstance::get_my_position()
 {
 	FVector2D player_position;
@@ -231,6 +242,7 @@ void UGameInfoInstance::process_tick()
 
 	player->m_hp = packet->player_hp;
 	player->m_stamina = packet->player_stamina;
+	player->m_be_hit = packet->player_be_hit;
 	player->m_guard_hit = packet->player_guard_hit;
 	enemy->m_x = packet->enemy_x;
 	enemy->m_y = packet->enemy_y;
@@ -348,7 +360,7 @@ void UGameInfoInstance::send_attack_packet(float reduce_amount)
 	client_packet_reduce_health packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_ATTACK;
-	packet.id = player->id;
+	packet.id = player->enemy_id;
 	packet.reduce_health = reduce_amount;
 
 	send_packet_not_recv(&packet, CLIENT_ATTACK);
@@ -363,6 +375,17 @@ void UGameInfoInstance::send_start_packet()
 	packet.character_type = player->m_character_type;
 
 	send_packet(&packet, CLIENT_START);
+}
+
+void UGameInfoInstance::send_be_hit_packet(bool be_hit)
+{
+	client_packet_be_hit packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_BE_HIT;
+	packet.be_hit = be_hit;
+
+	send_packet_not_recv(&packet, CLIENT_BE_HIT);
+
 }
 
 void UGameInfoInstance::send_guard_packet()
