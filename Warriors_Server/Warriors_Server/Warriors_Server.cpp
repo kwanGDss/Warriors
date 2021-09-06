@@ -248,6 +248,8 @@ void process_packet_logout(int p_id, client_packet_logout* packet)
 	cout << players[p_id].m_name << " Client Leave from Server" << endl;
 	players[p_id].m_hp = 1.f;
 	players[p_id].m_stamina = 1.f;
+	players[players[p_id].enemy_id].m_hp = 1.f;
+	players[players[p_id].enemy_id].m_stamina = 1.f;
 	disconnect(p_id);
 }
 
