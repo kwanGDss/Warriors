@@ -460,6 +460,10 @@ void UGameInfoInstance::send_tick_packet()
 
 void UGameInfoInstance::send_logout_packet()
 {
+	player->m_hp = 1.f;
+	player->m_stamina = 1.f;
+	enemy->m_hp = 1.f;
+	enemy->m_stamina = 1.f;
 	client_packet_logout packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_LOGOUT;
