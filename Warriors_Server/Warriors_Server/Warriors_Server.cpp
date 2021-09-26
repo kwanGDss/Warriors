@@ -214,7 +214,6 @@ void process_packet_attack(int p_id, client_packet_reduce_health* packet)
 void process_packet_start(int p_id, client_packet_start* packet)
 {
 	players[p_id].m_character_type = packet->character_type;
-	cout << packet->character_type << endl;
 	send_start_packet(p_id);
 }
 
