@@ -216,13 +216,13 @@ public:
 	void send_be_hit_packet(bool be_hit);
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
-	void send_guard_packet();
+	void send_guard_packet(bool guard);
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
-	void send_parrying_packet();
+	void send_parrying_packet(bool parrying);
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
-	void send_groggy_packet();
+	void send_groggy_packet(bool groggy);
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_guard_hit_packet(bool whosplayer, bool guard_hit);

@@ -59,7 +59,7 @@ float UGameInfoInstance::get_enemy_health()
 void UGameInfoInstance::set_my_guard(bool guard)
 {
 	player->m_guard = guard;
-	send_guard_packet();
+	send_guard_packet(guard);
 }
 
 bool UGameInfoInstance::get_my_guard()
@@ -80,7 +80,7 @@ bool UGameInfoInstance::get_enemy_guard()
 void UGameInfoInstance::set_my_parrying(bool parrying)
 {
 	player->m_parrying = parrying;
-	send_parrying_packet();
+	send_parrying_packet(parrying);
 }
 
 bool UGameInfoInstance::get_my_parrying()
@@ -101,7 +101,7 @@ bool UGameInfoInstance::get_enemy_parrying()
 void UGameInfoInstance::set_my_groggy(bool groggy)
 {
 	player->m_groggy = groggy;
-	send_groggy_packet();
+	send_groggy_packet(groggy);
 }
 
 bool UGameInfoInstance::get_my_groggy()
@@ -399,32 +399,32 @@ void UGameInfoInstance::send_be_hit_packet(bool be_hit)
 
 }
 
-void UGameInfoInstance::send_guard_packet()
+void UGameInfoInstance::send_guard_packet(bool guard)
 {
 	client_packet_guard packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_GUARD;
-	packet.guard = player->m_guard;
+	packet.guard = guard;
 
 	send_packet_not_recv(&packet, CLIENT_GUARD);
 }
 
-void UGameInfoInstance::send_parrying_packet()
+void UGameInfoInstance::send_parrying_packet(bool parrying)
 {
 	client_packet_parrying packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_PARRYING;
-	packet.parrying = player->m_parrying;
+	packet.parrying = parrying;
 
 	send_packet_not_recv(&packet, CLIENT_PARRYING);
 }
 
-void UGameInfoInstance::send_groggy_packet()
+void UGameInfoInstance::send_groggy_packet(bool groggy)
 {
 	client_packet_groggy packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_GROGGY;
-	packet.groggy = player->m_groggy;
+	packet.groggy = groggy;
 
 	send_packet_not_recv(&packet, CLIENT_GROGGY);
 }
@@ -434,7 +434,7 @@ void UGameInfoInstance::send_guard_hit_packet(bool whosplayer, bool guard_hit)
 	client_packet_guard_hit packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_GUARD_HIT;
-	if(!whosplayer)
+	if(!(whosplayer % 2))
 	{
 		packet.id = player->id;
 		packet.guard_hit = guard_hit;

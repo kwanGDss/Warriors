@@ -1,1 +1,3 @@
-﻿  Warriors_Server.vcxproj -> C:\M_S\Warriors\Warriors_Server\Warriors_Server\x64\Debug\Warriors_Server.exe
+﻿  Warriors_Server.cpp
+C:\M_S\Warriors\Warriors_Server\Warriors_Server\Warriors_Server.cpp(411,5): warning C4060: switch문에 'case' 또는 'default' 레이블이 없습니다.
+  Warriors_Server.vcxproj -> C:\M_S\Warriors\Warriors_Server\Warriors_Server\x64\Debug\Warriors_Server.exe
