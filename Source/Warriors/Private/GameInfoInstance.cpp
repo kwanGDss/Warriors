@@ -434,7 +434,7 @@ void UGameInfoInstance::send_guard_hit_packet(bool whosplayer, bool guard_hit)
 	client_packet_guard_hit packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_GUARD_HIT;
-	if(!(whosplayer % 2))
+	if(!whosplayer)
 	{
 		packet.id = player->id;
 		packet.guard_hit = guard_hit;
