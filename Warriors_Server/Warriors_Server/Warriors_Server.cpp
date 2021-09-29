@@ -153,8 +153,6 @@ void send_tick_packet(int p_id)
 	packet.enemy_guard_hit = enemy_player.m_guard_hit;
 
 	send_packet(p_id, &packet, SERVER_TICK);
-
-	cout << packet.player_stamina << endl;
 }
 
 void do_recv(int p_id)
@@ -196,7 +194,11 @@ void process_packet_change_character(int p_id, client_packet_change_character* p
 void process_packet_reduce_stamina(int p_id, client_packet_reduce_stamina* packet)
 {
 	//players[p_id].m_lock.lock();
-	if((players[p_id].m_stamina - packet->reduce_stamina) >= 0.f)
+	if(players[p_id].m_stamina >= 1.f)
+	{
+		players[p_id].m_stamina = 1.f;
+	}
+	if(((players[p_id].m_stamina) - (packet->reduce_stamina)) >= 0.f)
 	{
 		players[p_id].m_stamina -= packet->reduce_stamina;
 	}
