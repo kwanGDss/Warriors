@@ -255,7 +255,7 @@ void process_packet_groggy(int p_id, client_packet_groggy* packet)
 void process_packet_guard_hit(int p_id, client_packet_guard_hit* packet)
 {
 	players[packet->id].m_guard_hit = packet->guard_hit;
-	cout << p_id << " guard_hit : " << players[p_id].m_guard_hit << endl;
+	cout << packet->id << " guard_hit : " << packet->guard_hit << endl;
 }
 
 void process_packet_logout(int p_id, client_packet_logout* packet)
