@@ -189,19 +189,21 @@ void process_packet_login(int p_id, client_packet_login* packet)
 void process_packet_change_character(int p_id, client_packet_change_character* packet)
 {
 	players[p_id].m_character_type = packet->change_character;
+	cout << p_id << " character change : " << players[p_id].m_character_type << endl;
 }
 
 void process_packet_reduce_stamina(int p_id, client_packet_reduce_stamina* packet)
 {
 	//players[p_id].m_lock.lock();
-	if((players[p_id].m_stamina >= 1.f) || (players[p_id].m_stamina <= 1.f))
-	{
-		players[p_id].m_stamina = 1.f;
-	}
-	if(((players[p_id].m_stamina) - (packet->reduce_stamina)) >= 0.f)
+	if(((players[p_id].m_stamina) - (packet->reduce_stamina)) >= 0)
 	{
 		players[p_id].m_stamina -= packet->reduce_stamina;
 	}
+	if((players[p_id].m_stamina < 0) || (players[p_id].m_stamina > 1.1))
+	{
+		players[p_id].m_stamina = 1;
+	}
+	//cout << p_id << " stamina : " << players[p_id].m_stamina << endl;
 	//players[p_id].m_lock.unlock();
 }
 
@@ -215,7 +217,9 @@ void process_packet_tick(int p_id, client_packet_tick* packet)
 void process_packet_attack(int p_id, client_packet_reduce_health* packet)
 {
 	players[packet->id].m_hp -= packet->reduce_health;
+	cout << p_id << " health : " << players[p_id].m_hp << endl;
 	players[packet->id].m_be_hit = true;
+	cout << p_id << " be_hit : " << players[p_id].m_be_hit << endl;
 }
 
 void process_packet_start(int p_id, client_packet_start* packet)
@@ -227,26 +231,31 @@ void process_packet_start(int p_id, client_packet_start* packet)
 void process_packet_be_hit(int p_id, client_packet_be_hit* packet)
 {
 	players[p_id].m_be_hit = packet->be_hit;
+	cout << p_id << " be_hit : " << players[p_id].m_be_hit << endl;
 }
 
 void process_packet_guard(int p_id, client_packet_guard* packet)
 {
 	players[p_id].m_guard = packet->guard;
+	cout << p_id << " guard : " << players[p_id].m_guard << endl;
 }
 
 void process_packet_parrying(int p_id, client_packet_parrying* packet)
 {
 	players[p_id].m_parrying = packet->parrying;
+	cout << p_id << " parrying : " << players[p_id].m_parrying << endl;
 }
 
 void process_packet_groggy(int p_id, client_packet_groggy* packet)
 {
 	players[p_id].m_groggy = packet->groggy;
+	cout << p_id << " groggy : " << players[p_id].m_groggy << endl;
 }
 
 void process_packet_guard_hit(int p_id, client_packet_guard_hit* packet)
 {
 	players[packet->id].m_guard_hit = packet->guard_hit;
+	cout << p_id << " guard_hit : " << players[p_id].m_guard_hit << endl;
 }
 
 void process_packet_logout(int p_id, client_packet_logout* packet)
