@@ -194,7 +194,7 @@ void process_packet_change_character(int p_id, client_packet_change_character* p
 void process_packet_reduce_stamina(int p_id, client_packet_reduce_stamina* packet)
 {
 	//players[p_id].m_lock.lock();
-	if(players[p_id].m_stamina >= 1.f)
+	if((players[p_id].m_stamina >= 1.f) || (players[p_id].m_stamina <= 1.f))
 	{
 		players[p_id].m_stamina = 1.f;
 	}
