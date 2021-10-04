@@ -217,9 +217,9 @@ void process_packet_tick(int p_id, client_packet_tick* packet)
 void process_packet_attack(int p_id, client_packet_reduce_health* packet)
 {
 	players[packet->id].m_hp -= packet->reduce_health;
-	cout << p_id << " health : " << players[p_id].m_hp << endl;
+	//cout << p_id << " health : " << players[p_id].m_hp << endl;
 	players[packet->id].m_be_hit = true;
-	cout << p_id << " be_hit : " << players[p_id].m_be_hit << endl;
+	cout << packet->id << " be_hit : " << players[packet->id].m_be_hit << endl;
 }
 
 void process_packet_start(int p_id, client_packet_start* packet)
