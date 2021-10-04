@@ -101,7 +101,7 @@ bool UGameInfoInstance::get_enemy_parrying()
 void UGameInfoInstance::set_my_groggy(bool groggy)
 {
 	player->m_groggy = groggy;
-	send_groggy_packet(groggy);
+	send_groggy_packet(0, groggy);
 }
 
 bool UGameInfoInstance::get_my_groggy()
@@ -112,6 +112,7 @@ bool UGameInfoInstance::get_my_groggy()
 void UGameInfoInstance::set_enemy_groggy(bool groggy)
 {
 	enemy->m_groggy = groggy;
+	send_groggy_packet(1, groggy);
 }
 
 bool UGameInfoInstance::get_enemy_groggy()
@@ -419,12 +420,13 @@ void UGameInfoInstance::send_parrying_packet(bool parrying)
 	send_packet_not_recv(&packet, CLIENT_PARRYING);
 }
 
-void UGameInfoInstance::send_groggy_packet(bool groggy)
+void UGameInfoInstance::send_groggy_packet(bool id, bool groggy)
 {
 	client_packet_groggy packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_GROGGY;
 	packet.groggy = groggy;
+	packet.id = id;
 
 	send_packet_not_recv(&packet, CLIENT_GROGGY);
 }
