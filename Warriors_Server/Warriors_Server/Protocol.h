@@ -93,6 +93,7 @@ struct client_packet_groggy
 	unsigned char	size;
 	unsigned char	type;
 	bool			groggy;
+	bool			id;
 };
 
 struct client_packet_guard_hit

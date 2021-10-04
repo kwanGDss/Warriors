@@ -199,7 +199,11 @@ void process_packet_reduce_stamina(int p_id, client_packet_reduce_stamina* packe
 	{
 		players[p_id].m_stamina -= packet->reduce_stamina;
 	}
-	if((players[p_id].m_stamina < 0) || (players[p_id].m_stamina > 1.1))
+	if(players[p_id].m_stamina < 0)
+	{
+		players[p_id].m_stamina = 0;
+	}
+	if(players[p_id].m_stamina > 1.1)
 	{
 		players[p_id].m_stamina = 1;
 	}
@@ -216,6 +220,10 @@ void process_packet_tick(int p_id, client_packet_tick* packet)
 
 void process_packet_attack(int p_id, client_packet_reduce_health* packet)
 {
+	if((packet->id != 0) && (packet->id != 1))
+	{
+		return;
+	}
 	players[packet->id].m_hp -= packet->reduce_health;
 	//cout << p_id << " health : " << players[p_id].m_hp << endl;
 	players[packet->id].m_be_hit = true;
@@ -248,12 +256,25 @@ void process_packet_parrying(int p_id, client_packet_parrying* packet)
 
 void process_packet_groggy(int p_id, client_packet_groggy* packet)
 {
-	players[p_id].m_groggy = packet->groggy;
-	cout << p_id << " groggy : " << players[p_id].m_groggy << endl;
+	if(packet->id == 0)
+	{
+		players[p_id].m_groggy = packet->groggy;
+		cout << p_id << " groggy : " << packet->groggy << endl;
+	}
+	if(packet->id == 1)
+	{
+		players[players[p_id].enemy_id].m_groggy = packet->groggy;
+		cout << players[p_id].enemy_id << " groggy : " << packet->groggy << endl;
+	}
+	
 }
 
 void process_packet_guard_hit(int p_id, client_packet_guard_hit* packet)
 {
+	if((packet->id != 0) && (packet->id != 1))
+	{
+		return;
+	}
 	players[packet->id].m_guard_hit = packet->guard_hit;
 	cout << packet->id << " guard_hit : " << packet->guard_hit << endl;
 }
