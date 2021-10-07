@@ -1,8 +1,1 @@
-﻿  Common.cpp
-  Warriors_Server.cpp
-C:\M_S\Warriors\Warriors_Server\Warriors_Server\Warriors_Server.cpp(446,5): warning C4060: switch문에 'case' 또는 'default' 레이블이 없습니다.
-  코드를 생성하고 있습니다.
-  Previous IPDB not found, fall back to full compilation.
-  All 149 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
-  코드를 생성했습니다.
-  Warriors_Server.vcxproj -> C:\M_S\Warriors\Warriors_Server\Warriors_Server\x64\Release\Warriors_Server.exe
+﻿  Warriors_Server.vcxproj -> D:\UE_4.26\Warriors\Warriors_Server\Warriors_Server\x64\Release\Warriors_Server.exe

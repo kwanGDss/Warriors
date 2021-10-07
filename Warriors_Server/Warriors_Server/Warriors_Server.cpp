@@ -142,8 +142,8 @@ void send_tick_packet(int p_id)
 	packet.type = SERVER_TICK;
 	packet.player_hp = tmp_player.m_hp;
 	packet.player_stamina = tmp_player.m_stamina;
-	packet.enemy_x = enemy_player.m_x;
-	packet.enemy_y = enemy_player.m_y;
+	//packet.enemy_x = enemy_player.m_x;
+	//packet.enemy_y = enemy_player.m_y;
 	packet.enemy_hp = enemy_player.m_hp;
 	packet.player_be_hit = tmp_player.m_be_hit;
 	packet.player_guard_hit = tmp_player.m_guard_hit;
@@ -153,6 +153,9 @@ void send_tick_packet(int p_id)
 	packet.enemy_guard_hit = enemy_player.m_guard_hit;
 
 	send_packet(p_id, &packet, SERVER_TICK);
+
+	players[p_id].m_be_hit = false;
+	players[p_id].m_guard_hit = false;
 }
 
 void do_recv(int p_id)
