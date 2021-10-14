@@ -71,7 +71,6 @@ struct client_packet_start
 {
 	unsigned char	size;
 	unsigned char	type;
-	int				id;
 	bool			character_type;
 };
 
@@ -109,7 +108,6 @@ struct client_packet_reduce_stamina
 {
 	unsigned char	size;
 	unsigned char	type;
-	int				id;
 	float			reduce_stamina;
 };
 
@@ -117,7 +115,6 @@ struct client_packet_reduce_health
 {
 	unsigned char	size;
 	unsigned char	type;
-	int				id;
 	float			reduce_health;
 };
 

@@ -388,7 +388,6 @@ void UGameInfoInstance::send_stamina_packet(float reduce_amount)
 
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_REDUCE_STAMINA;
-	packet.id = player->id;
 	packet.reduce_stamina = reduce_amount;
 
 	send_packet_not_recv(&packet, CLIENT_REDUCE_STAMINA);
@@ -409,7 +408,6 @@ void UGameInfoInstance::send_start_packet()
 	client_packet_start packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_START;
-	packet.id = player->id;
 	packet.character_type = player->m_character_type;
 
 	send_packet(&packet, CLIENT_START);

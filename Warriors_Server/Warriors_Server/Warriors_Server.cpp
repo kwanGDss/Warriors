@@ -184,7 +184,7 @@ void process_packet_login(int p_id, client_packet_login* packet)
 {
 	//players[p_id].m_lock.lock();
 	strcpy_s(players[p_id].m_name, packet->name);
-	if(players[p_id].id % 2)
+	if((players[p_id].id) % 2)
 	{
 		players[p_id].enemy_id = players[p_id].id - 1;
 	}
