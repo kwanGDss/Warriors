@@ -252,6 +252,25 @@ void UGameInfoInstance::process_tick()
 	enemy->m_parrying = packet->enemy_parrying;
 	enemy->m_groggy = packet->enemy_groggy;
 	enemy->m_guard_hit = packet->enemy_guard_hit;
+
+	/*if (player->m_be_hit)
+	{
+		send_be_hit_packet(false);
+	}
+	if (player->m_guard_hit)
+	{
+		send_guard_hit_packet(false, false);
+	}*/
+}
+
+void UGameInfoInstance::process_attack()
+{
+	server_packet_attack* packet = reinterpret_cast<server_packet_attack*>(r_wsabuf.m_wsabuf[0].buf);
+
+	if (!(packet->enemy_be_hit))
+	{
+		send_attack_packet(0.2f);
+	}
 }
 
 void UGameInfoInstance::process_packet()
@@ -273,18 +292,22 @@ void UGameInfoInstance::process_packet()
 	case SERVER_TICK:
 		process_tick();
 		break;
+	case SERVER_ATTACK:
+		process_attack();
+		break;
 	}
 }
 
 void UGameInfoInstance::recv_packet()
 {
 	SOCKETINFO& r_over = r_wsabuf;
-	memset(&r_over.m_over, 0, sizeof(r_over.m_over));
+	memset(&r_over, 0, sizeof(r_over));
 	r_over.m_wsabuf[0].len = MAX_BUFFER;
 	r_over.m_wsabuf[0].buf = reinterpret_cast<CHAR*>(r_over.m_buf);
 	DWORD r_flag = 0;
 
 	WSARecv(serverSocket, r_over.m_wsabuf, 1, 0, &r_flag, &r_over.m_over, 0);
+	//WSARecv(serverSocket, r_over.m_wsabuf, 1, 0, &r_flag, 0, 0);
 
 	process_packet();
 }
@@ -304,6 +327,8 @@ void UGameInfoInstance::send_packet(void* buf, char packet_type)
 	WSASend(serverSocket, s_info->m_wsabuf, 1, 0, 0, &s_info->m_over, 0);
 
 	recv_packet();
+
+	delete(s_info);
 }
 
 void UGameInfoInstance::send_packet_not_recv(void* buf, char packet_type)
@@ -319,6 +344,8 @@ void UGameInfoInstance::send_packet_not_recv(void* buf, char packet_type)
 	s_info->m_wsabuf[0].len = packet_size;
 
 	WSASend(serverSocket, s_info->m_wsabuf, 1, 0, 0, &s_info->m_over, 0);
+
+	delete(s_info);
 }
 
 void UGameInfoInstance::send_login_packet()
@@ -372,7 +399,6 @@ void UGameInfoInstance::send_attack_packet(float reduce_amount)
 	client_packet_reduce_health packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_ATTACK;
-	packet.id = player->enemy_id;
 	packet.reduce_health = reduce_amount;
 
 	send_packet_not_recv(&packet, CLIENT_ATTACK);

@@ -33,6 +33,7 @@ constexpr int SERVER_PLAYER_STATUS =	2;
 constexpr int SERVER_ENEMY_STATUS =		3;
 constexpr int SERVER_START =			4;
 constexpr int SERVER_TICK =				5;
+constexpr int SERVER_ATTACK =			6;
 
 enum class OP_TYPE { OP_RECV = 0, OP_SEND = 1, OP_ACCEPT = 2, OP_DO_MOVE = 3};
 enum class S_STATE { STATE_FREE = 0, STATE_CONNECTED = 1, STATE_INGAME = 2 };
@@ -194,6 +195,13 @@ struct server_packet_start
 	unsigned char	size;
 	unsigned char	type;
 	bool			enemy_character_type;
+};
+
+struct server_packet_attack
+{
+	unsigned char	size;
+	unsigned char	type;
+	bool			enemy_be_hit;
 };
 
 struct server_packet_tick

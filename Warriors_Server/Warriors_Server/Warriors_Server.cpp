@@ -133,6 +133,16 @@ void send_start_packet(int p_id)
 	send_packet(p_id, &packet, SERVER_START);
 }
 
+void send_attack_packet(int p_id)
+{
+	server_packet_attack packet;
+	packet.size = sizeof(packet);
+	packet.type = SERVER_ATTACK;
+	packet.enemy_be_hit = players[players[p_id].enemy_id].m_be_hit;
+
+	send_packet(p_id, &packet, SERVER_ATTACK);
+}
+
 void send_tick_packet(int p_id)
 {
 	PLAYERINFO& tmp_player = players[p_id];
@@ -154,8 +164,8 @@ void send_tick_packet(int p_id)
 
 	send_packet(p_id, &packet, SERVER_TICK);
 
-	players[p_id].m_be_hit = false;
-	players[p_id].m_guard_hit = false;
+	//players[p_id].m_be_hit = false;
+	//players[p_id].m_guard_hit = false;
 }
 
 void do_recv(int p_id)
@@ -174,19 +184,19 @@ void process_packet_login(int p_id, client_packet_login* packet)
 {
 	//players[p_id].m_lock.lock();
 	strcpy_s(players[p_id].m_name, packet->name);
-	if(p_id % 2)
+	if(players[p_id].id % 2)
 	{
-		players[p_id].enemy_id = p_id - 1;
+		players[p_id].enemy_id = players[p_id].id - 1;
 	}
 	else
 	{
-		players[p_id].enemy_id = p_id + 1;
+		players[p_id].enemy_id = players[p_id].id + 1;
 	}
 	players[p_id].m_hp = 1.f;
 	players[p_id].m_stamina = 1.f;
 	send_login_ok(p_id);
 	//players[p_id].m_lock.unlock();
-	cout << players[p_id].m_name << " Player Connect Success!" << endl;
+	cout << players[p_id].m_name << " Player Connect Success! " << players[p_id].id << endl;
 }
 
 void process_packet_change_character(int p_id, client_packet_change_character* packet)
@@ -223,14 +233,10 @@ void process_packet_tick(int p_id, client_packet_tick* packet)
 
 void process_packet_attack(int p_id, client_packet_reduce_health* packet)
 {
-	if((packet->id != 0) && (packet->id != 1))
-	{
-		return;
-	}
-	players[packet->id].m_hp -= packet->reduce_health;
-	//cout << p_id << " health : " << players[p_id].m_hp << endl;
-	players[packet->id].m_be_hit = true;
-	cout << packet->id << " be_hit : " << players[packet->id].m_be_hit << endl;
+	int enemy_id = players[p_id].enemy_id;
+	players[enemy_id].m_hp -= packet->reduce_health;
+	players[enemy_id].m_be_hit = true;
+	cout << enemy_id << " be_hit : " << players[enemy_id].m_be_hit << endl;
 }
 
 void process_packet_start(int p_id, client_packet_start* packet)

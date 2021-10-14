@@ -186,6 +186,8 @@ public:
 
 	void process_tick();
 
+	void process_attack();
+
 	void process_packet();
 
 	void recv_packet();
