@@ -1,8 +1,8 @@
 ﻿  Warriors_Server.cpp
-D:\UE_4.26\Warriors\Warriors_Server\Warriors_Server\Warriors_Server.cpp(455,5): warning C4060: switch문에 'case' 또는 'default' 레이블이 없습니다.
+D:\UE_4.26\Warriors\Warriors_Server\Warriors_Server\Warriors_Server.cpp(457,5): warning C4060: switch문에 'case' 또는 'default' 레이블이 없습니다.
   코드를 생성하고 있습니다.
-  7 of 149 functions ( 4.7%) were compiled, the rest were copied from previous compilation.
+  4 of 149 functions ( 2.7%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    10 functions had inline decision re-evaluated but remain unchanged
+    7 functions had inline decision re-evaluated but remain unchanged
   코드를 생성했습니다.
   Warriors_Server.vcxproj -> D:\UE_4.26\Warriors\Warriors_Server\Warriors_Server\x64\Release\Warriors_Server.exe

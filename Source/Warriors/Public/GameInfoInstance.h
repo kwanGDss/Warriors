@@ -174,6 +174,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
 	FVector2D get_enemy_position();
 
+	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
+	int get_my_id();
+
 	UFUNCTION(BlueprintCallable, Category = "ProcessSocket")
 	void initSocket();
 

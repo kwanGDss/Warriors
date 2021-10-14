@@ -105,12 +105,14 @@ void send_login_ok(int p_id)
 	server_packet_login_ok packet;
 	packet.size = sizeof(packet);
 	packet.type = SERVER_LOGIN_OK;
-	packet.id = p_id;
+	packet.id = players[p_id].id;
 	packet.hp = players[p_id].m_hp;
 	packet.stamina = players[p_id].m_stamina;
 	packet.enemy_id = players[p_id].enemy_id;
 
 	send_packet(p_id, &packet, SERVER_LOGIN_OK);
+
+	cout << "send Login Packet! " << endl;
 }
 
 void send_login_fail(int p_id)
@@ -196,7 +198,7 @@ void process_packet_login(int p_id, client_packet_login* packet)
 	players[p_id].m_stamina = 1.f;
 	send_login_ok(p_id);
 	//players[p_id].m_lock.unlock();
-	cout << players[p_id].m_name << " Player Connect Success! " << players[p_id].id << endl;
+	cout << players[p_id].m_name << " Player Connect Success! " << endl;
 }
 
 void process_packet_change_character(int p_id, client_packet_change_character* packet)

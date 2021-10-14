@@ -195,6 +195,11 @@ FVector2D UGameInfoInstance::get_enemy_position()
 	return enemy_position;
 }
 
+int UGameInfoInstance::get_my_id()
+{
+	return player->id;
+}
+
 void UGameInfoInstance::initSocket()
 {
 	char* Server_IP = TCHAR_TO_ANSI(*IPAddress);
@@ -376,7 +381,6 @@ void UGameInfoInstance::send_reduce_health(float reduce_amount)
 	client_packet_reduce_health packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_ATTACK;
-	packet.id = player->id;
 	packet.reduce_health = reduce_amount;
 
 	send_packet_not_recv(&packet, CLIENT_ATTACK);
