@@ -93,15 +93,15 @@ struct client_packet_groggy
 	unsigned char	size;
 	unsigned char	type;
 	bool			groggy;
-	bool			id;
+	bool			who;
 };
 
 struct client_packet_guard_hit
 {
 	unsigned char	size;
 	unsigned char	type;
-	int				id;
 	bool			guard_hit;
+	bool			who;
 };
 
 struct client_packet_reduce_stamina

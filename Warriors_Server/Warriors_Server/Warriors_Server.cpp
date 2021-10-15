@@ -267,27 +267,38 @@ void process_packet_parrying(int p_id, client_packet_parrying* packet)
 
 void process_packet_groggy(int p_id, client_packet_groggy* packet)
 {
-	if(packet->id == 0)
+	if ((packet->who != true) && (packet->who != false))
+	{
+		return;
+	}
+	if(packet->who)
 	{
 		players[p_id].m_groggy = packet->groggy;
 		cout << p_id << " groggy : " << packet->groggy << endl;
 	}
-	if(packet->id == 1)
+	else
 	{
 		players[players[p_id].enemy_id].m_groggy = packet->groggy;
 		cout << players[p_id].enemy_id << " groggy : " << packet->groggy << endl;
 	}
-	
 }
 
 void process_packet_guard_hit(int p_id, client_packet_guard_hit* packet)
 {
-	if((packet->id != 0) && (packet->id != 1))
+	if((packet->who != true) && (packet->who != false))
 	{
 		return;
 	}
-	players[packet->id].m_guard_hit = packet->guard_hit;
-	cout << packet->id << " guard_hit : " << packet->guard_hit << endl;
+	if (packet->who)
+	{
+		players[p_id].m_guard_hit = packet->guard_hit;
+		cout << p_id << " guard_hit : " << packet->guard_hit << endl;
+	}
+	else
+	{
+		players[players[p_id].enemy_id].m_guard_hit = packet->guard_hit;
+		cout << players[p_id].enemy_id << " guard_hit : " << packet->guard_hit << endl;
+	}
 }
 
 void process_packet_logout(int p_id, client_packet_logout* packet)

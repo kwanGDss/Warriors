@@ -101,7 +101,7 @@ bool UGameInfoInstance::get_enemy_parrying()
 void UGameInfoInstance::set_my_groggy(bool groggy)
 {
 	player->m_groggy = groggy;
-	send_groggy_packet(0, groggy);
+	send_groggy_packet(true, groggy);
 }
 
 bool UGameInfoInstance::get_my_groggy()
@@ -112,7 +112,7 @@ bool UGameInfoInstance::get_my_groggy()
 void UGameInfoInstance::set_enemy_groggy(bool groggy)
 {
 	enemy->m_groggy = groggy;
-	send_groggy_packet(1, groggy);
+	send_groggy_packet(false, groggy);
 }
 
 bool UGameInfoInstance::get_enemy_groggy()
@@ -123,7 +123,7 @@ bool UGameInfoInstance::get_enemy_groggy()
 void UGameInfoInstance::set_my_guard_hit(bool guard_hit)
 {
 	player->m_guard_hit = guard_hit;
-	send_guard_hit_packet(0, guard_hit);
+	send_guard_hit_packet(true, guard_hit);
 }
 
 bool UGameInfoInstance::get_my_guard_hit()
@@ -134,7 +134,7 @@ bool UGameInfoInstance::get_my_guard_hit()
 void UGameInfoInstance::set_enemy_guard_hit(bool guard_hit)
 {
 	enemy->m_guard_hit = guard_hit;
-	send_guard_hit_packet(1, guard_hit);
+	send_guard_hit_packet(false, guard_hit);
 }
 
 bool UGameInfoInstance::get_enemy_guard_hit()
@@ -454,7 +454,7 @@ void UGameInfoInstance::send_groggy_packet(bool id, bool groggy)
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_GROGGY;
 	packet.groggy = groggy;
-	packet.id = id;
+	packet.who = id;
 
 	send_packet_not_recv(&packet, CLIENT_GROGGY);
 }
@@ -464,16 +464,8 @@ void UGameInfoInstance::send_guard_hit_packet(bool whosplayer, bool guard_hit)
 	client_packet_guard_hit packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_GUARD_HIT;
-	if(!whosplayer)
-	{
-		packet.id = player->id;
-		packet.guard_hit = guard_hit;
-	}
-	else
-	{
-		packet.id = player->enemy_id;
-		packet.guard_hit = guard_hit;
-	}
+	packet.guard_hit = guard_hit;
+	packet.who = whosplayer;
 	send_packet_not_recv(&packet, CLIENT_GUARD_HIT);
 }
 
