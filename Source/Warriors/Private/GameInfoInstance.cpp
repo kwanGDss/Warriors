@@ -162,12 +162,6 @@ bool UGameInfoInstance::get_enemy_charactor_type()
 	return enemy->m_character_type;
 }
 
-void UGameInfoInstance::set_my_position(float x, float y)
-{
-	player->m_x = x;
-	player->m_y = y;
-}
-
 bool UGameInfoInstance::get_my_be_hit()
 {
 	return player->m_be_hit;
@@ -177,22 +171,6 @@ void UGameInfoInstance::set_my_be_hit(bool be_hit)
 {
 	player->m_be_hit = be_hit;
 	send_be_hit_packet(be_hit);
-}
-
-FVector2D UGameInfoInstance::get_my_position()
-{
-	FVector2D player_position;
-	player_position.X = player->m_x;
-	player_position.Y = player->m_y;
-	return player_position;
-}
-
-FVector2D UGameInfoInstance::get_enemy_position()
-{
-	FVector2D enemy_position;
-	enemy_position.X = enemy->m_x;
-	enemy_position.Y = enemy->m_y;
-	return enemy_position;
 }
 
 int UGameInfoInstance::get_my_id()
@@ -248,24 +226,36 @@ void UGameInfoInstance::process_tick()
 
 	player->m_hp = packet->player_hp;
 	player->m_stamina = packet->player_stamina;
-	player->m_be_hit = packet->player_be_hit;
-	player->m_guard_hit = packet->player_guard_hit;
-	enemy->m_x = packet->enemy_x;
-	enemy->m_y = packet->enemy_y;
+	//player->m_be_hit = packet->player_be_hit;
+	//player->m_guard_hit = packet->player_guard_hit;
+
 	enemy->m_hp = packet->enemy_hp;
 	enemy->m_guard = packet->enemy_guard;
 	enemy->m_parrying = packet->enemy_parrying;
 	enemy->m_groggy = packet->enemy_groggy;
 	enemy->m_guard_hit = packet->enemy_guard_hit;
 
-	/*if (player->m_be_hit)
+	if(!(packet->player_be_hit))
 	{
-		send_be_hit_packet(false);
+		player->m_be_hit = packet->player_be_hit;
+		player->m_be_hit_change = false;
 	}
-	if (player->m_guard_hit)
+	else
 	{
-		send_guard_hit_packet(false, false);
-	}*/
+		player->m_be_hit = packet->player_be_hit;
+		player->m_be_hit_change = true;
+	}
+
+	if(!(packet->player_guard_hit))
+	{
+		player->m_guard_hit = packet->player_guard_hit;
+		player->m_guard_hit_change = false;
+	}
+	else
+	{
+		player->m_guard_hit = packet->player_guard_hit;
+		player->m_guard_hit_change = true;
+	}
 }
 
 void UGameInfoInstance::process_attack()
@@ -474,8 +464,8 @@ void UGameInfoInstance::send_tick_packet()
 	client_packet_tick packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_TICK;
-	packet.x = player->m_x;
-	packet.y = player->m_y;
+	packet.be_hit = player->m_be_hit_change;
+	packet.guard_hit = player->m_guard_hit_change;
 
 	send_packet(&packet, CLIENT_TICK);
 }

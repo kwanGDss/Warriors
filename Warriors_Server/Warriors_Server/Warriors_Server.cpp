@@ -39,7 +39,7 @@ struct PLAYERINFO
 
 	mutex					m_lock;
 	char					m_name[16];
-	float					m_x = 0, m_y = 0;
+	bool					m_be_hit_change = false, m_guard_hit_change = false;
 	float					m_hp = 1.f, m_stamina = 1.f;
 	bool					m_be_hit = false;
 	bool					m_guard = false;
@@ -50,8 +50,6 @@ struct PLAYERINFO
 
 	PLAYERINFO& operator = (const PLAYERINFO& Right)
 	{
-		m_x = Right.m_x;
-		m_y = Right.m_y;
 		m_hp = Right.m_hp;
 		m_stamina = Right.m_stamina;
 		strcpy_s(m_name, Right.m_name);
@@ -228,8 +226,14 @@ void process_packet_reduce_stamina(int p_id, client_packet_reduce_stamina* packe
 
 void process_packet_tick(int p_id, client_packet_tick* packet)
 {
-	players[p_id].m_x = packet->x;
-	players[p_id].m_y = packet->y;
+	if(packet->be_hit)
+	{
+		players[p_id].m_be_hit = false;
+	}
+	if(packet->guard_hit)
+	{
+		players[p_id].m_guard_hit = false;
+	}
 	send_tick_packet(p_id);
 }
 
@@ -267,10 +271,6 @@ void process_packet_parrying(int p_id, client_packet_parrying* packet)
 
 void process_packet_groggy(int p_id, client_packet_groggy* packet)
 {
-	if ((packet->who != true) && (packet->who != false))
-	{
-		return;
-	}
 	if(packet->who)
 	{
 		players[p_id].m_groggy = packet->groggy;
@@ -488,8 +488,6 @@ void worker()
 				n_s.m_recv_over.m_packet_type[0] = TO_SERVER;
 				n_s.m_recv_over.m_packet_type[1] = CLIENT_LOGIN;
 				n_s.m_socket = c_socket;
-				n_s.m_x = 3.f;
-				n_s.m_y = 3.f;
 				n_s.m_name[0] = 0;
 				n_s.m_lock.unlock();
 

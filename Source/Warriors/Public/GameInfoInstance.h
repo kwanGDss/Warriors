@@ -41,7 +41,7 @@ struct PLAYERINFO
 
 	mutex					m_lock;
 	char					m_name[16];
-	float					m_x = 0, m_y = 0;
+	bool					m_be_hit_change = false, m_guard_hit_change = false;
 	float					m_hp = 1.f, m_stamina = 1.f;
 	bool					m_be_hit = false;
 	bool					m_guard = false;
@@ -52,8 +52,6 @@ struct PLAYERINFO
 
 	PLAYERINFO& operator = (const PLAYERINFO& Right)
 	{
-		m_x = Right.m_x;
-		m_y = Right.m_y;
 		m_hp = Right.m_hp;
 		m_stamina = Right.m_stamina;
 		strcpy_s(m_name, Right.m_name);
@@ -160,19 +158,10 @@ public:
 	bool get_enemy_charactor_type();
 
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	void set_my_position(float x, float y);
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
 	bool get_my_be_hit();
 
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
 	void set_my_be_hit(bool be_hit);
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	FVector2D get_my_position();
-
-	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
-	FVector2D get_enemy_position();
 
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
 	int get_my_id();

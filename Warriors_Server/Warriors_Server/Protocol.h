@@ -129,8 +129,8 @@ struct client_packet_tick
 {
 	unsigned char	size;
 	unsigned char	type;
-	float			x;
-	float			y;
+	bool			be_hit;
+	bool			guard_hit;
 };
 
 struct client_packet_logout
