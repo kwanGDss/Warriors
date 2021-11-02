@@ -228,11 +228,11 @@ void process_packet_tick(int p_id, client_packet_tick* packet)
 {
 	if(packet->be_hit)
 	{
-		players[p_id].m_be_hit = false;
+		//players[p_id].m_be_hit = false;
 	}
 	if(packet->guard_hit)
 	{
-		players[p_id].m_guard_hit = false;
+		//players[p_id].m_guard_hit = false;
 	}
 	send_tick_packet(p_id);
 }
@@ -242,7 +242,7 @@ void process_packet_attack(int p_id, client_packet_reduce_health* packet)
 	int enemy_id = players[p_id].enemy_id;
 	players[enemy_id].m_hp -= packet->reduce_health;
 	players[enemy_id].m_be_hit = true;
-	cout << enemy_id << " be_hit : " << players[enemy_id].m_be_hit << endl;
+	cout << enemy_id << " attack_be_hit : " << players[enemy_id].m_be_hit << endl;
 }
 
 void process_packet_start(int p_id, client_packet_start* packet)
@@ -253,13 +253,15 @@ void process_packet_start(int p_id, client_packet_start* packet)
 
 void process_packet_be_hit(int p_id, client_packet_be_hit* packet)
 {
-	players[p_id].m_be_hit = packet->be_hit;
+	if(packet->be_hit == 0 || packet->be_hit == 1)
+		players[p_id].m_be_hit = packet->be_hit;
 	cout << p_id << " be_hit : " << players[p_id].m_be_hit << endl;
 }
 
 void process_packet_guard(int p_id, client_packet_guard* packet)
 {
-	players[p_id].m_guard = packet->guard;
+	if(packet->guard == 0 || packet->guard == 1)
+		players[p_id].m_guard = packet->guard;
 	cout << p_id << " guard : " << players[p_id].m_guard << endl;
 }
 

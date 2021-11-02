@@ -7,7 +7,7 @@ public class WarriorsServerTarget : TargetRules
 {
 	public WarriorsServerTarget(TargetInfo Target) : base(Target)
 	{
-		Type = TargetType.Game;
+		Type = TargetType.Server;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		ExtraModuleNames.Add("Warriors");
 	}

@@ -315,7 +315,9 @@ void UGameInfoInstance::send_packet(void* buf, char packet_type)
 	s_info->m_packet_type[0] = TO_SERVER;
 	s_info->m_packet_type[1] = packet_type;
 	memset(&s_info->m_over, 0, sizeof(s_info->m_over));
+	memset(&s_info->m_buf, 0, sizeof(s_info->m_buf));
 	memcpy(s_info->m_buf, buf, packet_size);
+	memset(&s_info->m_wsabuf[0].buf, 0, sizeof(s_info->m_wsabuf[0].buf));
 	s_info->m_wsabuf[0].buf = reinterpret_cast<char*>(s_info->m_buf);
 	s_info->m_wsabuf[0].len = packet_size;
 
