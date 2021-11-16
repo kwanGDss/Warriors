@@ -234,4 +234,6 @@ public:
 
 	PLAYERINFO* player = new PLAYERINFO;
 	PLAYERINFO* enemy = new PLAYERINFO;
+
+	PACKETINFO *tick_packet = new PACKETINFO;
 };
