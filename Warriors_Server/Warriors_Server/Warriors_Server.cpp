@@ -239,6 +239,8 @@ void process_packet_tick(int p_id, PACKETINFO* packet)
 	players[players[p_id].enemy_id].m_groggy = packet->Enemy_Groggy;
 	players[players[p_id].enemy_id].m_guard_hit = packet->Enemy_Guard_Hit;
 
+	cout << packet->Health_Reduce_Amount << packet->Stamina_Reduce_Amount << packet->Stamina_Increase_Amount << endl;
+
 	send_tick_packet(p_id);
 }
 
