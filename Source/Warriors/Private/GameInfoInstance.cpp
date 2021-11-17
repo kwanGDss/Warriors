@@ -236,36 +236,13 @@ void UGameInfoInstance::process_tick()
 
 	player->m_hp = packet->player_hp;
 	player->m_stamina = packet->player_stamina;
-	//player->m_be_hit = packet->player_be_hit;
-	//player->m_guard_hit = packet->player_guard_hit;
-
+	player->m_guard = packet->player_guard;
+	player->m_be_hit = packet->player_be_hit;
+	player->m_guard_hit = packet->player_guard_hit;
+	player->m_groggy = packet->player_groggy;
 	enemy->m_hp = packet->enemy_hp;
 	enemy->m_guard = packet->enemy_guard;
 	enemy->m_parrying = packet->enemy_parrying;
-	enemy->m_groggy = packet->enemy_groggy;
-	enemy->m_guard_hit = packet->enemy_guard_hit;
-
-	if(!(packet->player_be_hit))
-	{
-		player->m_be_hit = packet->player_be_hit; //false
-		player->m_be_hit_change = false;
-	}
-	else
-	{
-		player->m_be_hit = packet->player_be_hit; //true
-		player->m_be_hit_change = true;
-	}
-
-	if(!(packet->player_guard_hit))
-	{
-		player->m_guard_hit = packet->player_guard_hit; // false
-		player->m_guard_hit_change = false;
-	}
-	else
-	{
-		player->m_guard_hit = packet->player_guard_hit; // true
-		player->m_guard_hit_change = true;
-	}
 }
 
 void UGameInfoInstance::process_attack()
@@ -476,13 +453,29 @@ void UGameInfoInstance::send_guard_hit_packet(bool whosplayer, bool guard_hit)
 
 void UGameInfoInstance::send_tick_packet()
 {
-	client_packet_tick packet;
+	PACKETINFO packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_TICK;
-	packet.be_hit = player->m_be_hit_change;
-	packet.guard_hit = player->m_guard_hit_change;
+
+	packet.Stamina_Reduce_Amount = tick_packet->Stamina_Reduce_Amount;
+	packet.Stamina_Increase_Amount = tick_packet->Stamina_Increase_Amount;
+	packet.Health_Reduce_Amount = tick_packet->Health_Reduce_Amount;
+
+	packet.Attack = tick_packet->Attack;
+	packet.My_Guard = tick_packet->My_Guard;
+	packet.My_Parrying = tick_packet->My_Parrying;
+	packet.My_Groggy = tick_packet->My_Groggy;
+	packet.My_Guard_Hit = tick_packet->My_Guard_Hit;
+	packet.My_Be_Hit = tick_packet->My_Be_Hit;
+
+	packet.Enemy_Parrying = tick_packet->Enemy_Parrying;
+	packet.Enemy_Groggy = tick_packet->Enemy_Groggy;
+	packet.Enemy_Guard_Hit = tick_packet->Enemy_Guard_Hit;
+
+	memset(tick_packet, 0, sizeof(PACKETINFO));
 
 	send_packet(&packet, CLIENT_TICK);
+
 }
 
 void UGameInfoInstance::send_logout_packet()

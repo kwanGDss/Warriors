@@ -148,19 +148,17 @@ void send_tick_packet(int p_id)
 	PLAYERINFO& tmp_player = players[p_id];
 	PLAYERINFO& enemy_player = players[tmp_player.enemy_id];
 	server_packet_tick packet;
+
 	packet.size = sizeof(packet);
 	packet.type = SERVER_TICK;
 	packet.player_hp = tmp_player.m_hp;
 	packet.player_stamina = tmp_player.m_stamina;
-	//packet.enemy_x = enemy_player.m_x;
-	//packet.enemy_y = enemy_player.m_y;
-	packet.enemy_hp = enemy_player.m_hp;
+	packet.player_guard = tmp_player.m_guard;
 	packet.player_be_hit = tmp_player.m_be_hit;
 	packet.player_guard_hit = tmp_player.m_guard_hit;
+	packet.enemy_hp = enemy_player.m_hp;
 	packet.enemy_guard = enemy_player.m_guard;
 	packet.enemy_parrying = enemy_player.m_parrying;
-	packet.enemy_groggy = enemy_player.m_groggy;
-	packet.enemy_guard_hit = enemy_player.m_guard_hit;
 
 	send_packet(p_id, &packet, SERVER_TICK);
 
@@ -224,16 +222,23 @@ void process_packet_reduce_stamina(int p_id, client_packet_reduce_stamina* packe
 	//players[p_id].m_lock.unlock();
 }
 
-void process_packet_tick(int p_id, client_packet_tick* packet)
+void process_packet_tick(int p_id, PACKETINFO* packet)
 {
-	if(packet->be_hit)
-	{
-		//players[p_id].m_be_hit = false;
-	}
-	if(packet->guard_hit)
-	{
-		//players[p_id].m_guard_hit = false;
-	}
+	players[p_id].m_stamina += packet->Stamina_Increase_Amount - packet->Stamina_Reduce_Amount;
+	if (packet->Attack)
+		players[players[p_id].enemy_id].m_hp -= packet->Health_Reduce_Amount;
+	else
+		players[p_id].m_hp -= packet->Health_Reduce_Amount;
+	players[p_id].m_guard = packet->My_Guard;
+	players[p_id].m_parrying = packet->My_Parrying;
+	players[p_id].m_groggy = packet->My_Groggy;
+	players[p_id].m_guard_hit = packet->My_Guard_Hit;
+	players[p_id].m_be_hit = packet->My_Be_Hit;
+
+	players[players[p_id].enemy_id].m_parrying = packet->Enemy_Parrying;
+	players[players[p_id].enemy_id].m_groggy = packet->Enemy_Groggy;
+	players[players[p_id].enemy_id].m_guard_hit = packet->Enemy_Guard_Hit;
+
 	send_tick_packet(p_id);
 }
 
@@ -424,7 +429,7 @@ void worker()
 						}
 					case CLIENT_TICK:
 						{
-							process_packet_tick(key, reinterpret_cast<client_packet_tick*>(ps));
+							process_packet_tick(key, reinterpret_cast<PACKETINFO*>(ps));
 							break;
 						}
 					case CLIENT_GUARD:
