@@ -1,1 +1,2 @@
 C:\M_S\Warriors\Warriors_Server\x64\Release\Warriors_Server.exe
+D:\UE_4.26\Warriors\Warriors_Server\x64\Release\Warriors_Server.exe
