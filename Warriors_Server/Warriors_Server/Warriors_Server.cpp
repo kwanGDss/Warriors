@@ -161,9 +161,6 @@ void send_tick_packet(int p_id)
 	packet.enemy_parrying = enemy_player.m_parrying;
 
 	send_packet(p_id, &packet, SERVER_TICK);
-
-	//players[p_id].m_be_hit = false;
-	//players[p_id].m_guard_hit = false;
 }
 
 void do_recv(int p_id)
@@ -238,8 +235,6 @@ void process_packet_tick(int p_id, PACKETINFO* packet)
 	players[players[p_id].enemy_id].m_parrying = packet->Enemy_Parrying;
 	players[players[p_id].enemy_id].m_groggy = packet->Enemy_Groggy;
 	players[players[p_id].enemy_id].m_guard_hit = packet->Enemy_Guard_Hit;
-
-	cout << packet->Health_Reduce_Amount << packet->Stamina_Reduce_Amount << packet->Stamina_Increase_Amount << endl;
 
 	send_tick_packet(p_id);
 }
@@ -471,7 +466,7 @@ void worker()
 		case TO_CLIENT:
 			{
 				if (num_byte != ex_over->m_wsabuf[0].len) {disconnect(key);}
-				switch(pack->type)
+				//switch(pack->type)
 				{
 					
 				}
