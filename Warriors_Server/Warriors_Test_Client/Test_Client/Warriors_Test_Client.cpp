@@ -5,14 +5,14 @@
 #include <thread>
 #include <WS2tcpip.h>
 #include <MSWSock.h>
-#include "..\..\Warriors_Server\Common.h"
-#include "..\..\Warriors_Server\Protocol.h"
+#include "..\..\Protocol.h"
 
 using namespace std;
 
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "MSWSock.lib")
 
+// IOCP 소켓 구조체
 struct SOCKETINFO
 {
 	WSAOVERLAPPED	m_over;
@@ -22,22 +22,27 @@ struct SOCKETINFO
 	unsigned char	m_buf[1024];
 };
 
+
 struct PLAYERINFO
 {
 	int						id = NOT_INGAME;				// -1 : not ingame / 1 : ingame
+	int						enemy_id = NOT_INGAME;
 	unsigned char			m_prev_recv = 0;
 	SOCKETINFO				m_recv_over;
 	SOCKET					m_socket = -1;			// -1 : not connect / 1~ : connect 
 
-	mutex					m_lock;
 	char					m_name[16];
-	int						m_x = rand() % 10, m_y = rand() % 10;
+	bool					m_be_hit_change = false, m_guard_hit_change = false;
 	float					m_hp = 1.f, m_stamina = 1.f;
+	bool					m_be_hit = false;
+	bool					m_guard = false;
+	bool					m_parrying = false;
+	bool					m_groggy = false;
+	bool					m_guard_hit = false;
+	bool					m_character_type = 0; // 0 = knight / 1=viking
 
 	PLAYERINFO& operator = (const PLAYERINFO& Right)
 	{
-		m_x = Right.m_x;
-		m_y = Right.m_y;
 		m_hp = Right.m_hp;
 		m_stamina = Right.m_stamina;
 		strcpy_s(m_name, Right.m_name);
@@ -46,108 +51,486 @@ struct PLAYERINFO
 	}
 };
 
-float EnergyValue = 1.f;
-float HealthValue = 1.f;
 
-SOCKET serverSocket;
-
-char key_input[1];
-char is_cursor_key {0};
-
-int result{0};
-
-SOCKETINFO s_wsabuf;
-SOCKETINFO r_wsabuf;
+class UGameInfoInstance
+{
 
 
-void do_play();
-void show_view_map();
-void CALLBACK recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags);
-void CALLBACK send_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags);
+public:
+	UGameInfoInstance();
+	~UGameInfoInstance();
 
-PLAYERINFO *player = new PLAYERINFO;
+	string IPAddress;
 
-void setting_map()
+	string Player_Name;
+
+	float reduce_stamina(float reduce_amount);
+
+	float increase_stamina(float increase_amount);
+
+	float reduce_health(float reduce_amount);
+
+	float get_my_stamina();
+
+
+	void set_my_stamina(float increase_amount);
+
+	
+	float get_my_health();
+
+
+	float get_enemy_health();
+
+
+	void set_my_guard(bool guard);
+
+
+	bool get_my_guard();
+
+
+	void set_enemy_guard(bool guard);
+
+
+	bool get_enemy_guard();
+
+
+	void set_my_parrying(bool parrying);
+
+
+	bool get_my_parrying();
+
+
+	void set_enemy_parrying(bool parrying);
+
+	bool get_enemy_parrying();
+
+	void set_my_groggy(bool groggy);
+
+	bool get_my_groggy();
+
+
+	void set_enemy_groggy(bool groggy);
+
+
+	bool get_enemy_groggy();
+
+ 
+	void set_my_guard_hit(bool guard_hit);
+
+ 
+	bool get_my_guard_hit();
+
+ 
+	void set_enemy_guard_hit(bool guard_hit);
+
+ 
+	bool get_enemy_guard_hit();
+
+ 
+	void set_my_character_type(bool character_type);
+
+ 
+	bool get_my_character_type();
+
+ 
+	void set_enemy_charactor_type(bool character_type);
+
+ 
+	bool get_enemy_charactor_type();
+
+ 
+	bool get_my_be_hit();
+
+ 
+	void set_my_be_hit(bool be_hit);
+
+ 
+	int get_my_id();
+
+ 
+	void initSocket();
+
+ 
+	void connectSocket();
+
+	void process_login_packet();
+
+	void process_start_packet();
+
+	void process_tick();
+
+	void process_attack();
+
+	void process_packet();
+
+	void recv_packet();
+
+	void send_packet(void* buf, char packet_type);
+
+	void send_packet_not_recv(void* buf, char packet_type);
+
+ 
+	void send_login_packet();
+
+ 
+	void send_change_character_packet();
+
+ 
+	void send_reduce_health(float reduce_amount);
+
+ 
+	void send_stamina_packet(float reduce_amount);
+
+ 
+	void send_attack_packet(float reduce_amount);
+
+ 
+	void send_start_packet();
+
+ 
+	void send_be_hit_packet(bool be_hit);
+
+ 
+	void send_guard_packet(bool guard);
+
+ 
+	void send_parrying_packet(bool parrying);
+
+ 
+	void send_groggy_packet(bool id, bool groggy);
+
+ 
+	void send_guard_hit_packet(bool whosplayer, bool guard_hit);
+
+ 
+	void send_tick_packet();
+
+ 
+	void send_logout_packet();
+
+	SOCKET serverSocket;
+
+	SOCKETINFO s_wsabuf;
+	SOCKETINFO r_wsabuf;
+
+	PLAYERINFO* player = new PLAYERINFO;
+	PLAYERINFO* enemy = new PLAYERINFO;
+
+	PACKETINFO *tick_packet = new PACKETINFO;
+};
+
+
+
+UGameInfoInstance::UGameInfoInstance()
 {
 }
 
-void show_view_map()
+UGameInfoInstance::~UGameInfoInstance()
 {
+	closesocket(serverSocket);
+	WSACleanup();
 }
 
+float UGameInfoInstance::reduce_stamina(float reduce_amount)
+{
+	tick_packet->Stamina_Reduce_Amount = reduce_amount;
+	//send_stamina_packet(reduce_amount);
+	return player->m_stamina;
+}
 
-void process_login_packet()
+float UGameInfoInstance::increase_stamina(float increase_amount)
+{
+	tick_packet->Stamina_Increase_Amount = increase_amount;
+	//send_stamina_packet(reduce_amount);
+	return player->m_stamina;
+}
+
+float UGameInfoInstance::reduce_health(float reduce_amount)
+{
+	tick_packet->Health_Reduce_Amount = reduce_amount;
+	//send_reduce_health(reduce_amount);
+	return player->m_hp;
+}
+
+float UGameInfoInstance::get_my_stamina()
+{
+	return player->m_stamina;
+}
+
+void UGameInfoInstance::set_my_stamina(float increase_amount)
+{
+	float reduce_amount = -increase_amount;
+	send_stamina_packet(reduce_amount);
+}
+
+float UGameInfoInstance::get_my_health()
+{
+	return player->m_hp;
+}
+
+float UGameInfoInstance::get_enemy_health()
+{
+	return enemy->m_hp;
+}
+
+void UGameInfoInstance::set_my_guard(bool guard)
+{
+	player->m_guard = guard;
+	tick_packet->My_Guard = guard;
+	//send_guard_packet(guard);
+}
+
+bool UGameInfoInstance::get_my_guard()
+{
+	return player->m_guard;
+}
+
+void UGameInfoInstance::set_enemy_guard(bool guard)
+{
+	enemy->m_guard = guard;
+}
+
+bool UGameInfoInstance::get_enemy_guard()
+{
+	return enemy->m_guard;
+}
+
+void UGameInfoInstance::set_my_parrying(bool parrying)
+{
+	player->m_parrying = parrying;
+	tick_packet->My_Parrying = parrying;
+	//send_parrying_packet(parrying);
+}
+
+bool UGameInfoInstance::get_my_parrying()
+{
+	return player->m_parrying;
+}
+
+void UGameInfoInstance::set_enemy_parrying(bool parrying)
+{
+	enemy->m_parrying = parrying;
+	tick_packet->Enemy_Parrying = parrying;
+}
+
+bool UGameInfoInstance::get_enemy_parrying()
+{
+	return enemy->m_parrying;
+}
+
+void UGameInfoInstance::set_my_groggy(bool groggy)
+{
+	player->m_groggy = groggy;
+	tick_packet->My_Groggy = groggy;
+	//send_groggy_packet(true, groggy);
+}
+
+bool UGameInfoInstance::get_my_groggy()
+{
+	return player->m_groggy;
+}
+
+void UGameInfoInstance::set_enemy_groggy(bool groggy)
+{
+	enemy->m_groggy = groggy;
+	tick_packet->Enemy_Groggy = groggy;
+	//send_groggy_packet(false, groggy);
+}
+
+bool UGameInfoInstance::get_enemy_groggy()
+{
+	return enemy->m_groggy;
+}
+
+void UGameInfoInstance::set_my_guard_hit(bool guard_hit)
+{
+	player->m_guard_hit = guard_hit;
+	tick_packet->My_Guard_Hit = guard_hit;
+	//send_guard_hit_packet(true, guard_hit);
+}
+
+bool UGameInfoInstance::get_my_guard_hit()
+{
+	return player->m_guard_hit;
+}
+
+void UGameInfoInstance::set_enemy_guard_hit(bool guard_hit)
+{
+	enemy->m_guard_hit = guard_hit;
+	tick_packet->Enemy_Guard_Hit = guard_hit;
+	//send_guard_hit_packet(false, guard_hit);
+}
+
+bool UGameInfoInstance::get_enemy_guard_hit()
+{
+	return enemy->m_guard_hit;
+}
+
+void UGameInfoInstance::set_my_character_type(bool character_type)
+{
+	player->m_character_type = character_type;
+}
+
+bool UGameInfoInstance::get_my_character_type()
+{
+	return player->m_character_type;
+}
+
+void UGameInfoInstance::set_enemy_charactor_type(bool character_type)
+{
+	enemy->m_character_type = character_type;
+}
+
+bool UGameInfoInstance::get_enemy_charactor_type()
+{
+	return enemy->m_character_type;
+}
+
+bool UGameInfoInstance::get_my_be_hit()
+{
+	return player->m_be_hit;
+}
+
+void UGameInfoInstance::set_my_be_hit(bool be_hit)
+{
+	player->m_be_hit = be_hit;
+	tick_packet->My_Be_Hit = be_hit;
+	//send_be_hit_packet(be_hit);
+}
+
+int UGameInfoInstance::get_my_id()
+{
+	return player->id;
+}
+
+void UGameInfoInstance::initSocket()
+{
+	//char* Server_IP = TCHAR_TO_ANSI(*IPAddress);
+
+	char* server_IP = const_cast<char*>("127.0.0.1");
+
+	WSADATA WSAData;
+	if (WSAStartup(MAKEWORD(2, 2), &WSAData) != 0) printf_s("Can't Start WSA");
+
+	serverSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+}
+
+void UGameInfoInstance::connectSocket()
+{
+	//char* Server_IP = TCHAR_TO_ANSI(*IPAddress);
+	char* server_IP = const_cast<char*>("127.0.0.1");
+	SOCKADDR_IN serverAddr;
+	memset(&serverAddr, 0, sizeof(SOCKADDR_IN));
+	serverAddr.sin_family = AF_INET;
+	serverAddr.sin_port = htons(SERVER_PORT);
+	inet_pton(AF_INET, server_IP, &serverAddr.sin_addr);
+	
+	WSAConnect(serverSocket, reinterpret_cast<sockaddr*>(&serverAddr), sizeof(serverAddr), NULL, NULL, 0, 0);
+}
+
+void UGameInfoInstance::process_login_packet()
 {
 	server_packet_login_ok* packet = reinterpret_cast<server_packet_login_ok*>(r_wsabuf.m_wsabuf[0].buf);
 
 	player->id = packet->id;
-
 	player->m_hp = packet->hp;
 	player->m_stamina = packet->stamina;
+	player->enemy_id = packet->enemy_id;
 }
 
-void process_update_status()
+void UGameInfoInstance::process_start_packet()
 {
-	server_packet_players_status* packet = reinterpret_cast<server_packet_players_status*>(r_wsabuf.m_wsabuf[0].buf);
-	player->m_stamina = packet->stamina;
-	player->m_hp = packet->health;
+	server_packet_start* packet = reinterpret_cast<server_packet_start*>(r_wsabuf.m_wsabuf[0].buf);
+
+	enemy->m_character_type = packet->enemy_character_type;
 }
 
-void process_update_position()
+void UGameInfoInstance::process_tick()
 {
-	server_packet_move* packet = reinterpret_cast<server_packet_move*>(r_wsabuf.m_wsabuf[0].buf);
-	player->m_x = packet->x;
-	player->m_y = packet->y;
+	server_packet_tick* packet = reinterpret_cast<server_packet_tick*>(r_wsabuf.m_wsabuf[0].buf);
+
+	player->m_hp = packet->player_hp;
+	player->m_stamina = packet->player_stamina;
+	player->m_guard = packet->player_guard;
+	player->m_be_hit = packet->player_be_hit;
+	player->m_guard_hit = packet->player_guard_hit;
+	player->m_groggy = packet->player_groggy;
+	enemy->m_hp = packet->enemy_hp;
+	enemy->m_guard = packet->enemy_guard;
+	enemy->m_parrying = packet->enemy_parrying;
 }
 
-void process_add_obj()
+void UGameInfoInstance::process_attack()
 {
-}
+	server_packet_attack* packet = reinterpret_cast<server_packet_attack*>(r_wsabuf.m_wsabuf[0].buf);
 
-void process_remove_obj()
-{
-}
-
-void process_packet()
-{
-	server_packet_login* ex_over = reinterpret_cast<server_packet_login *>(r_wsabuf.m_buf);
-
-	cout << "recv start" << endl;
-
-	switch(ex_over->type)
+	if (!(packet->enemy_be_hit))
 	{
-	case SERVER_LOGIN_OK:
-		cout << "LOGIN_OK" << endl;
-		process_login_packet();
-		break;
-	case SERVER_LOGIN_FAIL:
-		cout << "LOGIN_FAIL" << endl;
-		break;
-	case SERVER_PLAYERS_STATUS:
-		cout << "UPDATE_STATUS" << endl;
-
-		break;
-	case SERVER_PLAYER_MOVE:
-		cout << "UPDATE_POSITION" << endl;
-		process_update_position();
-		break;
-	
+		send_attack_packet(0.2f);
 	}
 }
 
-void recv_packet()
+void UGameInfoInstance::process_packet()
+{
+	server_packet_tick* ex_over = reinterpret_cast<server_packet_tick*>(r_wsabuf.m_buf);
+
+	cout << "recv start" << endl;
+
+	switch (ex_over->type)
+	{
+	case SERVER_LOGIN_OK:
+		process_login_packet();
+		break;
+	case SERVER_LOGIN_FAIL:
+		break;
+	case SERVER_START:
+		process_start_packet();
+		break;
+	case SERVER_TICK:
+		process_tick();
+		break;
+	case SERVER_ATTACK:
+		process_attack();
+		break;
+	}
+}
+
+void UGameInfoInstance::recv_packet()
 {
 	SOCKETINFO& r_over = r_wsabuf;
-	memset(&r_over.m_over, 0, sizeof(r_over.m_over));
+	memset(&r_over, 0, sizeof(r_over));
 	r_over.m_wsabuf[0].len = MAX_BUFFER;
 	r_over.m_wsabuf[0].buf = reinterpret_cast<CHAR*>(r_over.m_buf);
 	DWORD r_flag = 0;
+
 	WSARecv(serverSocket, r_over.m_wsabuf, 1, 0, &r_flag, &r_over.m_over, 0);
+	//WSARecv(serverSocket, r_over.m_wsabuf, 1, 0, &r_flag, 0, 0);
 
 	process_packet();
 }
 
-void send_packet(void* buf, char packet_type)
+void UGameInfoInstance::send_packet(void* buf, char packet_type)
+{
+	SOCKETINFO* s_info = new SOCKETINFO;
+
+	unsigned char packet_size = reinterpret_cast<unsigned char*>(buf)[0];
+	s_info->m_packet_type[0] = TO_SERVER;
+	s_info->m_packet_type[1] = packet_type;
+	memset(&s_info->m_over, 0, sizeof(s_info->m_over));
+	memset(&s_info->m_buf, 0, sizeof(s_info->m_buf));
+	memcpy(s_info->m_buf, buf, packet_size);
+	memset(&s_info->m_wsabuf[0].buf, 0, sizeof(s_info->m_wsabuf[0].buf));
+	s_info->m_wsabuf[0].buf = reinterpret_cast<char*>(s_info->m_buf);
+	s_info->m_wsabuf[0].len = packet_size;
+
+	WSASend(serverSocket, s_info->m_wsabuf, 1, 0, 0, &s_info->m_over, 0);
+
+	recv_packet();
+
+	delete(s_info);
+}
+
+void UGameInfoInstance::send_packet_not_recv(void* buf, char packet_type)
 {
 	SOCKETINFO* s_info = new SOCKETINFO;
 
@@ -160,99 +543,178 @@ void send_packet(void* buf, char packet_type)
 	s_info->m_wsabuf[0].len = packet_size;
 
 	WSASend(serverSocket, s_info->m_wsabuf, 1, 0, 0, &s_info->m_over, 0);
-	
-	recv_packet();
+
+	delete(s_info);
 }
 
-void send_login_packet()
+void UGameInfoInstance::send_login_packet()
 {
+	//char* playername = TCHAR_TO_ANSI(*Player_Name);
 	client_packet_login packet;
 
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_LOGIN;
-	strcpy_s(packet.name, "BBaKKi");
+	strcpy_s(packet.name, "new_player");
 
 	send_packet(&packet, CLIENT_LOGIN);
+
+	memset(tick_packet, 0, sizeof(PACKETINFO));
 }
 
-void send_move_packet()
+void UGameInfoInstance::send_change_character_packet()
 {
-	client_packet_move packet;
+	client_packet_change_character packet;
+
 	packet.size = sizeof(packet);
-	packet.type = CLIENT_MOVE;
-	packet.dir = 3;
+	packet.type = CLIENT_CHANGE_CHARACTER;
+	packet.change_character = player->m_character_type;
 
-	send_packet(&packet, CLIENT_MOVE);
+	send_packet_not_recv(&packet, CLIENT_CHANGE_CHARACTER);
 }
 
-void send_attack_packet()
+void UGameInfoInstance::send_reduce_health(float reduce_amount)
 {
-	client_packet_attack packet;
+	client_packet_reduce_health packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_ATTACK;
+	packet.reduce_health = reduce_amount;
 
-	send_packet(&packet, CLIENT_ATTACK);
+	send_packet_not_recv(&packet, CLIENT_ATTACK);
 }
 
-
-void send_logout_packet()
+void UGameInfoInstance::send_stamina_packet(float reduce_amount)
 {
+	client_packet_reduce_stamina packet;
+
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_REDUCE_STAMINA;
+	packet.reduce_stamina = reduce_amount;
+
+	send_packet_not_recv(&packet, CLIENT_REDUCE_STAMINA);
+}
+
+void UGameInfoInstance::send_attack_packet(float reduce_amount)
+{
+	tick_packet->Attack = true;
+	tick_packet->Health_Reduce_Amount = reduce_amount;
+
+	/*client_packet_reduce_health packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_ATTACK;
+	packet.reduce_health = reduce_amount;
+
+	send_packet_not_recv(&packet, CLIENT_ATTACK);*/
+}
+
+void UGameInfoInstance::send_start_packet()
+{
+	client_packet_start packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_START;
+	packet.character_type = player->m_character_type;
+
+	send_packet(&packet, CLIENT_START);
+}
+
+void UGameInfoInstance::send_be_hit_packet(bool be_hit)
+{
+	client_packet_be_hit packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_BE_HIT;
+	packet.be_hit = be_hit;
+
+	send_packet_not_recv(&packet, CLIENT_BE_HIT);
+
+}
+
+void UGameInfoInstance::send_guard_packet(bool guard)
+{
+	client_packet_guard packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_GUARD;
+	packet.guard = guard;
+
+	send_packet_not_recv(&packet, CLIENT_GUARD);
+}
+
+void UGameInfoInstance::send_parrying_packet(bool parrying)
+{
+	client_packet_parrying packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_PARRYING;
+	packet.parrying = parrying;
+
+	send_packet_not_recv(&packet, CLIENT_PARRYING);
+}
+
+void UGameInfoInstance::send_groggy_packet(bool id, bool groggy)
+{
+	client_packet_groggy packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_GROGGY;
+	packet.groggy = groggy;
+	packet.who = id;
+
+	send_packet_not_recv(&packet, CLIENT_GROGGY);
+}
+
+void UGameInfoInstance::send_guard_hit_packet(bool whosplayer, bool guard_hit)
+{
+	client_packet_guard_hit packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_GUARD_HIT;
+	packet.guard_hit = guard_hit;
+	packet.who = whosplayer;
+	send_packet_not_recv(&packet, CLIENT_GUARD_HIT);
+}
+
+void UGameInfoInstance::send_tick_packet()
+{
+	PACKETINFO packet;
+	packet.size = sizeof(packet);
+	packet.type = CLIENT_TICK;
+
+	packet.Stamina_Reduce_Amount = tick_packet->Stamina_Reduce_Amount;
+	packet.Stamina_Increase_Amount = tick_packet->Stamina_Increase_Amount;
+	packet.Health_Reduce_Amount = tick_packet->Health_Reduce_Amount;
+
+	packet.Attack = tick_packet->Attack;
+	packet.My_Guard = tick_packet->My_Guard;
+	packet.My_Parrying = tick_packet->My_Parrying;
+	packet.My_Groggy = tick_packet->My_Groggy;
+	packet.My_Guard_Hit = tick_packet->My_Guard_Hit;
+	packet.My_Be_Hit = tick_packet->My_Be_Hit;
+
+	packet.Enemy_Parrying = tick_packet->Enemy_Parrying;
+	packet.Enemy_Groggy = tick_packet->Enemy_Groggy;
+	packet.Enemy_Guard_Hit = tick_packet->Enemy_Guard_Hit;
+
+	memset(tick_packet, 0, sizeof(PACKETINFO));
+
+	send_packet(&packet, CLIENT_TICK);
+
+}
+
+void UGameInfoInstance::send_logout_packet()
+{
+	player->m_hp = 1.f;
+	player->m_stamina = 1.f;
+	enemy->m_hp = 1.f;
+	enemy->m_stamina = 1.f;
 	client_packet_logout packet;
 	packet.size = sizeof(packet);
 	packet.type = CLIENT_LOGOUT;
 
-	send_packet(&packet, CLIENT_LOGOUT);
+	send_packet_not_recv(&packet, CLIENT_LOGOUT);
 }
 
-void do_play()
+int main()
 {
-	int i = 0;
-	while(true)
-	{
-		if(!i)
-		{
-			send_move_packet();
-			i++;
-		}
-				
-	}
-}
+	UGameInfoInstance new_player;
 
-void CALLBACK recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags)
-{
-}
-
-void CALLBACK send_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags)
-{
-}
-
-int main(void)
-{
-	std::wcout.imbue(std::locale("korean"));
-
-	s_wsabuf.m_wsabuf[0].buf = key_input;
-	s_wsabuf.m_wsabuf[0].len = 1;
-
-	char *server_IP = const_cast<char*>("127.0.0.1");
-
-	WSADATA WSAData;
-	if(WSAStartup(MAKEWORD(2, 2), &WSAData) != 0) return 1;
-
-	serverSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-
-	SOCKADDR_IN serverAddr;
-	memset(&serverAddr, 0, sizeof(SOCKADDR_IN));
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(SERVER_PORT);
-	inet_pton(AF_INET, server_IP, &serverAddr.sin_addr);
-
-	WSAConnect(serverSocket, reinterpret_cast<sockaddr *>(&serverAddr), sizeof(serverAddr), NULL, NULL, 0, 0);
-	
-	DWORD r_flag = 0;
-
-	send_login_packet();
-
-	closesocket(serverSocket);
-	WSACleanup();
+	new_player.initSocket();
+	new_player.connectSocket();
+	new_player.send_login_packet();
+	new_player.send_start_packet();
 	return 0;
 }

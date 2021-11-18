@@ -256,7 +256,7 @@ void UGameInfoInstance::process_attack()
 
 void UGameInfoInstance::process_packet()
 {
-	server_packet_login* ex_over = reinterpret_cast<server_packet_login*>(r_wsabuf.m_buf);
+	server_packet_tick* ex_over = reinterpret_cast<server_packet_tick*>(r_wsabuf.m_buf);
 
 	cout << "recv start" << endl;
 

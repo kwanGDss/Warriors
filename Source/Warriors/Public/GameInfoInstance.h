@@ -6,8 +6,7 @@
 #include <string>
 #include <WS2tcpip.h>
 #include <MSWSock.h>
-#include "..\..\..\Warriors_Server\Warriors_Server\Common.h"
-#include "..\..\..\Warriors_Server\Warriors_Server\Protocol.h"
+#include "..\..\..\Warriors_Server\Protocol.h"
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "GameInfoInstance.generated.h"
@@ -39,7 +38,6 @@ struct PLAYERINFO
 	SOCKETINFO				m_recv_over;
 	SOCKET					m_socket = -1;			// -1 : not connect / 1~ : connect 
 
-	mutex					m_lock;
 	char					m_name[16];
 	bool					m_be_hit_change = false, m_guard_hit_change = false;
 	float					m_hp = 1.f, m_stamina = 1.f;

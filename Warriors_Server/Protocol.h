@@ -223,16 +223,16 @@ struct server_packet_tick
 {
 	unsigned char	size;
 	unsigned char	type;
+
 	float			player_hp;//
 	float			player_stamina;//
 	bool			player_guard;
 	bool			player_be_hit;//
 	bool			player_guard_hit;//
 	bool			player_groggy;//
+
 	float			enemy_hp;
 	bool			enemy_guard;//
-	bool			enemy_parrying;//
-	//bool			enemy_groggy;
-	//bool			enemy_guard_hit;
+	bool			enemy_parrying;
 };
 #pragma pack (pop)
