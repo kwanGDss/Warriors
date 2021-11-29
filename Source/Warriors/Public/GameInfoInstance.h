@@ -6,7 +6,7 @@
 #include <string>
 #include <WS2tcpip.h>
 #include <MSWSock.h>
-#include "..\..\..\Warriors_Server\Protocol.h"
+#include "..\..\..\Warriors_Server\Warriors_Server\Protocol.h"
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "GameInfoInstance.generated.h"
@@ -164,6 +164,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
 	int get_my_id();
 
+	UFUNCTION(BlueprintCallable, Category = "CharacterInfo")
+	bool get_be_hit_packet();
+
 	UFUNCTION(BlueprintCallable, Category = "ProcessSocket")
 	void initSocket();
 
@@ -224,6 +227,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "SendPacket")
 	void send_logout_packet();
+
+	bool packet_be_hit = false;
 
 	SOCKET serverSocket;
 

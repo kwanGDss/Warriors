@@ -154,16 +154,18 @@ void send_tick_packet(int p_id)
 
 	packet.player_hp = tmp_player.m_hp;
 	packet.player_stamina = tmp_player.m_stamina;
-	packet.player_guard = tmp_player.m_guard;
+
+	//packet.player_guard = tmp_player.m_guard;
 	packet.player_be_hit = tmp_player.m_be_hit;
 	packet.player_guard_hit = tmp_player.m_guard_hit;
 	packet.player_groggy = tmp_player.m_groggy;
 
-	packet.enemy_hp = enemy_player.m_hp;
 	packet.enemy_guard = enemy_player.m_guard;
-	packet.enemy_parrying = enemy_player.m_parrying;
 
 	send_packet(p_id, &packet, SERVER_TICK);
+
+	if(tmp_player.m_be_hit == true)
+		cout << p_id << " be hit true\n";
 }
 
 void do_recv(int p_id)
@@ -224,20 +226,48 @@ void process_packet_reduce_stamina(int p_id, client_packet_reduce_stamina* packe
 
 void process_packet_tick(int p_id, PACKETINFO* packet)
 {
-	players[p_id].m_stamina += packet->Stamina_Increase_Amount - packet->Stamina_Reduce_Amount;
-	if (packet->Attack)
+	if(players[p_id].m_stamina < 1)
+		players[p_id].m_stamina += 0.0003;
+	if((packet->Stamina_Reduce_Amount > 0) && (packet->Stamina_Reduce_Amount < 0.5))
+	{
+		players[p_id].m_stamina -= packet->Stamina_Reduce_Amount;
+	}
+	
+	if (packet->Attack == 1)
+	{
 		players[players[p_id].enemy_id].m_hp -= packet->Health_Reduce_Amount;
-	else
+		players[players[p_id].enemy_id].m_be_hit = true;
+		cout << p_id << " Attack!" << endl;
+	}
+	else if(packet->Attack == 0)
 		players[p_id].m_hp -= packet->Health_Reduce_Amount;
-	players[p_id].m_guard = packet->My_Guard;
-	players[p_id].m_parrying = packet->My_Parrying;
-	players[p_id].m_groggy = packet->My_Groggy;
-	players[p_id].m_guard_hit = packet->My_Guard_Hit;
-	players[p_id].m_be_hit = packet->My_Be_Hit;
+	if(packet->My_Guard == 1) 
+	{
+		if(players[p_id].m_guard == 1)
+			players[p_id].m_guard = 0;
+		else
+			players[p_id].m_guard = 1;
+		cout << p_id << " Guard Change " << players[p_id].m_guard << endl;
+	}
+	if((packet->My_Groggy == 0) || (packet->My_Groggy == 1))
+		players[p_id].m_groggy = packet->My_Groggy;
+	if(packet->My_Guard_Hit == 1)
+	{
+		cout << "my guatd hit change" << endl;
+		players[p_id].m_guard_hit = false;
+	}
+	if(packet->My_Be_Hit == 1)
+	{
+		cout << "My_Be_Hit change" << endl;
+		players[p_id].m_be_hit = false;
+	}
 
-	players[players[p_id].enemy_id].m_parrying = packet->Enemy_Parrying;
-	players[players[p_id].enemy_id].m_groggy = packet->Enemy_Groggy;
-	players[players[p_id].enemy_id].m_guard_hit = packet->Enemy_Guard_Hit;
+
+	if(packet->Enemy_Guard_Hit == 1)
+	{
+		players[players[p_id].enemy_id].m_guard_hit = true;
+		cout << "Enemy Guard Hit" << endl;
+	}
 
 	send_tick_packet(p_id);
 }
@@ -317,7 +347,6 @@ void process_packet_logout(int p_id, client_packet_logout* packet)
 	players[players[p_id].enemy_id].m_stamina = 1.f;
 	disconnect(p_id);
 }
-
 
 int get_new_player_id()
 {

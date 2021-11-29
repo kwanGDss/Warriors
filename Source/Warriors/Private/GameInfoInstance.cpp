@@ -17,14 +17,14 @@ UGameInfoInstance::~UGameInfoInstance()
 
 float UGameInfoInstance::reduce_stamina(float reduce_amount)
 {
-	tick_packet->Stamina_Reduce_Amount = reduce_amount;
+	tick_packet->Stamina_Reduce_Amount += reduce_amount;
 	//send_stamina_packet(reduce_amount);
 	return player->m_stamina;
 }
 
 float UGameInfoInstance::increase_stamina(float increase_amount)
 {
-	tick_packet->Stamina_Increase_Amount = increase_amount;
+	//tick_packet->Stamina_Increase_Amount = increase_amount;
 	//send_stamina_packet(reduce_amount);
 	return player->m_stamina;
 }
@@ -59,8 +59,9 @@ float UGameInfoInstance::get_enemy_health()
 
 void UGameInfoInstance::set_my_guard(bool guard)
 {
+	if(player->m_guard != guard)
+		tick_packet->My_Guard = 1;
 	player->m_guard = guard;
-	tick_packet->My_Guard = guard;
 	//send_guard_packet(guard);
 }
 
@@ -82,7 +83,6 @@ bool UGameInfoInstance::get_enemy_guard()
 void UGameInfoInstance::set_my_parrying(bool parrying)
 {
 	player->m_parrying = parrying;
-	tick_packet->My_Parrying = parrying;
 	//send_parrying_packet(parrying);
 }
 
@@ -94,7 +94,7 @@ bool UGameInfoInstance::get_my_parrying()
 void UGameInfoInstance::set_enemy_parrying(bool parrying)
 {
 	enemy->m_parrying = parrying;
-	tick_packet->Enemy_Parrying = parrying;
+	//tick_packet->Enemy_Parrying = parrying;
 }
 
 bool UGameInfoInstance::get_enemy_parrying()
@@ -105,7 +105,6 @@ bool UGameInfoInstance::get_enemy_parrying()
 void UGameInfoInstance::set_my_groggy(bool groggy)
 {
 	player->m_groggy = groggy;
-	tick_packet->My_Groggy = groggy;
 	//send_groggy_packet(true, groggy);
 }
 
@@ -117,7 +116,7 @@ bool UGameInfoInstance::get_my_groggy()
 void UGameInfoInstance::set_enemy_groggy(bool groggy)
 {
 	enemy->m_groggy = groggy;
-	tick_packet->Enemy_Groggy = groggy;
+	//tick_packet->Enemy_Groggy = groggy;
 	//send_groggy_packet(false, groggy);
 }
 
@@ -129,7 +128,7 @@ bool UGameInfoInstance::get_enemy_groggy()
 void UGameInfoInstance::set_my_guard_hit(bool guard_hit)
 {
 	player->m_guard_hit = guard_hit;
-	tick_packet->My_Guard_Hit = guard_hit;
+	tick_packet->My_Guard_Hit = true;
 	//send_guard_hit_packet(true, guard_hit);
 }
 
@@ -141,7 +140,8 @@ bool UGameInfoInstance::get_my_guard_hit()
 void UGameInfoInstance::set_enemy_guard_hit(bool guard_hit)
 {
 	enemy->m_guard_hit = guard_hit;
-	tick_packet->Enemy_Guard_Hit = guard_hit;
+	if(guard_hit == true)
+		tick_packet->Enemy_Guard_Hit = true;
 	//send_guard_hit_packet(false, guard_hit);
 }
 
@@ -178,13 +178,20 @@ bool UGameInfoInstance::get_my_be_hit()
 void UGameInfoInstance::set_my_be_hit(bool be_hit)
 {
 	player->m_be_hit = be_hit;
-	tick_packet->My_Be_Hit = be_hit;
-	//send_be_hit_packet(be_hit);
+	tick_packet->My_Be_Hit = true;
+	send_be_hit_packet(be_hit);
 }
 
 int UGameInfoInstance::get_my_id()
 {
 	return player->id;
+}
+
+bool UGameInfoInstance::get_be_hit_packet()
+{
+	bool ret = packet_be_hit;
+	packet_be_hit = false;
+	return ret;
 }
 
 void UGameInfoInstance::initSocket()
@@ -235,13 +242,17 @@ void UGameInfoInstance::process_tick()
 
 	player->m_hp = packet->player_hp;
 	player->m_stamina = packet->player_stamina;
-	player->m_guard = packet->player_guard;
 	player->m_be_hit = packet->player_be_hit;
-	player->m_guard_hit = packet->player_guard_hit;
+	packet_be_hit = packet->player_be_hit;
+	if(packet->player_guard_hit == 1)
+		player->m_guard_hit = true;
+	else if(packet->player_guard_hit == 0)
+		player->m_guard_hit = false;
 	player->m_groggy = packet->player_groggy;
-	enemy->m_hp = packet->enemy_hp;
-	enemy->m_guard = packet->enemy_guard;
-	enemy->m_parrying = packet->enemy_parrying;
+	if(packet->enemy_guard == 1)
+		player->m_parrying = true;
+	else if(packet->enemy_guard == 0)
+		player->m_parrying = false;
 }
 
 void UGameInfoInstance::process_attack()
@@ -459,24 +470,19 @@ void UGameInfoInstance::send_tick_packet()
 	packet.type = CLIENT_TICK;
 
 	packet.Stamina_Reduce_Amount = tick_packet->Stamina_Reduce_Amount;
-	packet.Stamina_Increase_Amount = tick_packet->Stamina_Increase_Amount;
 	packet.Health_Reduce_Amount = tick_packet->Health_Reduce_Amount;
 
 	packet.Attack = tick_packet->Attack;
 	packet.My_Guard = tick_packet->My_Guard;
-	packet.My_Parrying = tick_packet->My_Parrying;
-	packet.My_Groggy = tick_packet->My_Groggy;
+	packet.My_Groggy = player->m_groggy;
 	packet.My_Guard_Hit = tick_packet->My_Guard_Hit;
 	packet.My_Be_Hit = tick_packet->My_Be_Hit;
 
-	packet.Enemy_Parrying = tick_packet->Enemy_Parrying;
-	packet.Enemy_Groggy = tick_packet->Enemy_Groggy;
 	packet.Enemy_Guard_Hit = tick_packet->Enemy_Guard_Hit;
 
 	memset(tick_packet, 0, sizeof(PACKETINFO));
 
 	send_packet(&packet, CLIENT_TICK);
-
 }
 
 void UGameInfoInstance::send_logout_packet()

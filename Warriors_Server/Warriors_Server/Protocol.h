@@ -58,16 +58,12 @@ struct PACKETINFO
 	unsigned char	size;
 	unsigned char	type;
 	float			Stamina_Reduce_Amount;
-	float			Stamina_Increase_Amount;
 	float			Health_Reduce_Amount;
 	bool			Attack;
 	bool			My_Guard;
-	bool			My_Parrying;
 	bool			My_Groggy;
 	bool			My_Guard_Hit;
 	bool			My_Be_Hit;
-	bool			Enemy_Parrying;
-	bool			Enemy_Groggy;
 	bool			Enemy_Guard_Hit;
 };
 
@@ -226,13 +222,10 @@ struct server_packet_tick
 
 	float			player_hp;//
 	float			player_stamina;//
-	bool			player_guard;
 	bool			player_be_hit;//
 	bool			player_guard_hit;//
 	bool			player_groggy;//
 
-	float			enemy_hp;
 	bool			enemy_guard;//
-	bool			enemy_parrying;
 };
 #pragma pack (pop)
